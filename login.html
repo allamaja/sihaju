@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login - Portal Hafizh Junior</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #008f7a; /* Deep Teal */
+            --primary-dark: #007a69;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-dark: #2d3436;
+            --text-muted: #636e72;
+            --danger: #d63031;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Loading Overlay (Mencegah user nge-klik saat sistem sedang mengecek sesi) */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--primary-color);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; z-index: 1000; transition: opacity 0.3s;
+        }
+        #loadingOverlay.hidden { opacity: 0; pointer-events: none; visibility: hidden; }
+
+        /* Login Box */
+        .login-container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px 30px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            text-align: center;
+            animation: slideUp 0.5s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .brand-logo { color: var(--primary-color); margin-bottom: 15px; }
+        .login-container h2 { color: var(--text-dark); margin-bottom: 5px; font-weight: 700; font-size: 1.5rem; }
+        .login-container p { color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem; }
+
+        .input-group { margin-bottom: 18px; text-align: left; }
+        .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600;}
+        .input-group input { 
+            width: 100%; padding: 14px 15px; border: 1.5px solid #dfe6e9; 
+            border-radius: 12px; font-size: 1rem; outline: none; transition: 0.3s;
+            color: var(--text-dark); background-color: #fcfcfc;
+        }
+        .input-group input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(0,143,122,0.1); background-color: #fff;}
+        
+        .btn-login {
+            width: 100%; padding: 15px; background: var(--primary-color); color: white;
+            border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 600;
+            cursor: pointer; margin-top: 10px; transition: 0.2s;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        .btn-login:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,143,122,0.3); }
+        .btn-login:active { transform: translateY(0); }
+        .btn-login:disabled { background: #b2bec3; cursor: not-allowed; transform: none; box-shadow: none;}
+        
+        .error-msg { 
+            color: var(--danger); font-size: 0.85rem; margin-top: 15px; 
+            display: none; background: #ffeaa7; padding: 10px; border-radius: 8px; font-weight: 500;
+            background-color: rgba(214, 48, 49, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loadingOverlay">
+        <i class="fa-solid fa-circle-notch fa-spin fa-3x" style="margin-bottom: 15px;"></i>
+        <h3>Memeriksa Sesi...</h3>
+    </div>
+
+    <div class="login-container">
+        <img src="logo-hj.png" alt="Logo Hafizh Junior" style="width: 150px; height: 80px; object-fit: contain; border-radius: 5px;"> 
+        <p>Portal Sistem Informasi Terpadu</p>
+
+        <form id="loginForm" onsubmit="loginFirebase(event)">
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="loginUsername" required placeholder="Masukkan Username" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" required placeholder="Masukkan kata sandi">
+            </div>
+            <button type="submit" class="btn-login" id="btnLoginBtn">
+                Masuk <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            </button>
+            <div id="loginError" class="error-msg"><i class="fa-solid fa-circle-exclamation"></i> Kredensial tidak valid.</div>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // Konfigurasi Firebase-mu
+        const firebaseConfig = {
+            apiKey: "AIzaSyDN_okDhvmPQQ2mAoZqGnrwZ0C7lL6YQDU",
+            authDomain: "hafizh-junior-portal.firebaseapp.com",
+            projectId: "hafizh-junior-portal",
+            storageBucket: "hafizh-junior-portal.firebasestorage.app",
+            messagingSenderId: "840125196141",
+            appId: "1:840125196141:web:4e57c5f7e21c91085a9c64"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errBox = document.getElementById('loginError');
+
+        // --- SISTEM ROUTER (Pengarah Halaman Berdasarkan Role) ---
+        const routeUser = (role) => {
+            if (role === 'super_admin' || role === 'admin_wilayah') {
+                window.location.href = 'admin.html';
+            } else if (role === 'guru') {
+                window.location.href = 'guru.html';
+            } else {
+                alert("Role tidak dikenali. Hubungi Administrator.");
+                signOut(auth);
+                loadingOverlay.classList.add('hidden');
+            }
+        };
+
+        // --- SATPAM PENGECEK SESI ---
+        // Aktif otomatis saat halaman dibuka. Jika sudah login, langsung lempar tanpa minta password lagi.
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const docRef = doc(db, "users", user.uid);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        routeUser(docSnap.data().role);
+                    } else {
+                        throw new Error("Data profil tidak ditemukan di database.");
+                    }
+                } catch (error) {
+                    console.error("Kesalahan sinkronisasi data:", error);
+                    signOut(auth);
+                    loadingOverlay.classList.add('hidden');
+                }
+            } else {
+                // Jika belum login, sembunyikan overlay loading, biarkan user mengisi form
+                setTimeout(() => { loadingOverlay.classList.add('hidden'); }, 500);
+            }
+        });
+
+        // --- FUNGSI KLIK TOMBOL LOGIN ---
+        window.loginFirebase = async function(e) {
+            e.preventDefault();
+            
+            const rawUsername = document.getElementById('loginUsername').value.trim().toLowerCase();
+            const email = rawUsername + '@hj.com'; // Penambahan domain otomatis
+            const pass = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('btnLoginBtn');
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...';
+            btn.disabled = true;
+            errBox.style.display = "none";
+
+            try {
+                // Login ke Firebase. Jika sukses, onAuthStateChanged di atas akan otomatis berjalan
+                // dan mengarahkan user ke halaman yang sesuai.
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (error) {
+                console.error("Login Error:", error.code);
+                errBox.style.display = "block";
+                
+                // Pesan error ramah pengguna
+                if(error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password'){
+                    errBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Username atau password salah.';
+                } else if(error.code === 'auth/network-request-failed'){
+                    errBox.innerHTML = '<i class="fa-solid fa-wifi"></i> Koneksi internet terputus.';
+                } else {
+                    errBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Terjadi kesalahan sistem.';
+                }
+
+                btn.innerHTML = 'Masuk <i class="fa-solid fa-arrow-right-to-bracket"></i>';
+                btn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>

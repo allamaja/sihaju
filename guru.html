@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Portal Guru - Hafizh Junior</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --primary-color: #008f7a; 
+            --primary-dark: #007a69; 
+            --bg-body: #e0e5ec;       
+            --bg-app: #f4f7f6;        
+            --card-bg: #ffffff;
+            --text-dark: #2d3436;
+            --text-muted: #636e72;
+            --warning: #fdcb6e;       
+            --danger: #d63031;        
+            --info: #0984e3;          
+            --sidebar-width: 260px;   
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-body); min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* --- STRUKTUR LAYOUT UTAMA --- */
+        .sidebar-nav {
+            display: none; width: var(--sidebar-width); background: var(--card-bg); height: 100vh;
+            position: fixed; left: 0; top: 0; flex-direction: column; padding: 30px 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 100;
+        }
+        #main-content {
+            flex: 1; width: 100%; max-width: 480px; margin: 0 auto; background-color: var(--bg-app);
+            position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.05); padding-bottom: 80px; 
+            min-height: 100vh; transition: all 0.3s ease;
+        }
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto;
+            background: var(--card-bg); display: flex; justify-content: space-around;
+            padding: 12px 0 20px 0; box-shadow: 0 -2px 15px rgba(0,0,0,0.05);
+            border-top-left-radius: 20px; border-top-right-radius: 20px; z-index: 90;
+        }
+
+        /* --- STYLING KOMPONEN --- */
+        .header-profile {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white; padding: 30px 25px 50px 25px;
+            border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;
+        }
+        .header-profile h2 { font-size: 1.4rem; font-weight: 600; margin-bottom: 5px; }
+        .header-profile p { font-size: 0.95rem; opacity: 0.9; }
+        .badge-status {
+            display: inline-flex; align-items: center; background: rgba(255,255,255,0.25);
+            padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;
+            margin-top: 15px; backdrop-filter: blur(5px);
+        }
+        .badge-status i { margin-right: 6px; }
+
+        .action-card {
+            background: var(--card-bg); margin: -35px 25px 25px 25px; padding: 25px;
+            border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            text-align: center; position: relative;
+        }
+        .live-clock { font-size: 2.5rem; font-weight: 700; color: var(--text-dark); letter-spacing: 1px; }
+        .location-status { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 25px; display: flex; align-items: center; justify-content: center;}
+        .location-status i { color: var(--primary-color); margin-right: 8px; }
+        
+        .btn-absen-raksasa {
+            background: var(--primary-color); color: white; border: none; width: 100%; padding: 16px;
+            border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 143, 122, 0.3); display: flex; align-items: center; justify-content: center;
+        }
+        .btn-absen-raksasa:active { transform: scale(0.98); box-shadow: none; }
+        .btn-absen-raksasa:disabled { background: #b2bec3; box-shadow: none; cursor: not-allowed; }
+        .btn-absen-raksasa i { margin-right: 10px; font-size: 1.2rem; }
+
+        .section-padding { padding: 0 25px; }
+        .section-title { font-size: 1.1rem; color: var(--text-dark); margin-bottom: 15px; font-weight: 600;}
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: var(--card-bg); padding: 20px 15px; border-radius: 16px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .stat-value { font-size: 1.6rem; font-weight: 700; margin-bottom: 5px; }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 500;}
+
+        .history-list { margin-bottom: 25px; }
+        .history-item {
+            background: var(--card-bg); padding: 18px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border-left: 5px solid var(--primary-color);
+        }
+        .history-item.terlambat { border-left-color: var(--warning); }
+        .history-item.izin { border-left-color: var(--info); }
+        .history-info h4 { font-size: 1rem; color: var(--text-dark); margin-bottom: 4px; font-weight: 600;}
+        .history-info p { font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center;}
+        .history-info p i { margin-right: 6px; font-size: 0.8rem;}
+        .history-status { text-align: right; }
+        .history-status span { font-size: 0.9rem; font-weight: 700; }
+        .history-status small { display: block; font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;}
+
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); text-decoration: none; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: 0.3s; padding: 5px; }
+        .nav-item i { font-size: 1.4rem; margin-bottom: 6px; }
+        .nav-item.active { color: var(--primary-color); }
+        .nav-item:hover { color: var(--primary-dark); }
+
+        .view { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .text-green { color: var(--primary-color); } .text-yellow { color: var(--warning); } .text-blue { color: var(--info); }
+        .dummy-view { padding: 50px 25px; text-align: center; color: var(--text-muted); }
+
+        /* --- TAMPILAN LOGIN --- */
+        #view-login { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); z-index: 999; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+        #view-login.active { display: flex; }
+        .login-box { background: var(--card-bg); width: 100%; max-width: 400px; padding: 40px 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; }
+        .login-box h2 { color: var(--text-dark); margin-bottom: 25px; font-weight: 700; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px; font-weight: 500;}
+        .input-group input { width: 100%; padding: 12px 15px; border: 1px solid #dfe6e9; border-radius: 10px; font-size: 1rem; outline: none; transition: 0.3s; }
+        .input-group input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0,143,122,0.1); }
+        .btn-login { width: 100%; padding: 14px; background: var(--primary-color); color: white; border: none; border-radius: 10px; font-size: 1.05rem; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn-login:hover { background: var(--primary-dark); }
+        .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 15px; display: none; }
+
+        /* ================= MEDIA QUERIES (> 992px) ================= */
+        @media screen and (min-width: 992px) {
+            body { flex-direction: row; background-color: var(--bg-app); }
+            .sidebar-nav { display: flex; }
+            .brand-logo { font-size: 1.5rem; font-weight: 800; color: var(--primary-color); margin-bottom: 40px; display: flex; align-items: center; }
+            .brand-logo i { margin-right: 10px; font-size: 1.8rem; }
+            
+            .sidebar-menu .nav-item { flex-direction: row; align-items: center; font-size: 1rem; padding: 15px 20px; border-radius: 12px; margin-bottom: 10px; }
+            .sidebar-menu .nav-item i { margin-bottom: 0; margin-right: 15px; font-size: 1.2rem; }
+            .sidebar-menu .nav-item.active { background-color: rgba(0, 143, 122, 0.1); }
+
+            #main-content { margin-left: var(--sidebar-width); max-width: none; width: calc(100% - var(--sidebar-width)); padding-bottom: 30px; box-shadow: none; border-top-left-radius: 30px; background: var(--bg-app); min-height: 100vh; overflow-y: auto; }
+            .bottom-nav { display: none !important; }
+            .header-profile { border-radius: 0 0 30px 30px; padding: 40px 40px 60px 40px; }
+            .action-card { margin: -40px 40px 30px 40px; max-width: 600px; }
+            .section-padding { padding: 0 40px; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 25px; } 
+        }
+        /* --- STYLING MODAL & TOMBOL BADAL --- */
+        .btn-badal {
+            background: transparent; border: 2px solid var(--info); color: var(--info);
+            width: 100%; padding: 14px; border-radius: 12px; font-size: 1rem; font-weight: 600;
+            cursor: pointer; margin-top: 15px; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .btn-badal:active { background: var(--info); color: white; transform: scale(0.98); }
+        .btn-badal i { margin-right: 8px; font-size: 1.1rem; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
+            display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px;
+            opacity: 0; transition: 0.3s;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-box {
+            background: var(--card-bg); width: 100%; max-width: 400px; border-radius: 20px;
+            overflow: hidden; transform: translateY(20px); transition: 0.3s; box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        .modal-overlay.active .modal-box { transform: translateY(0); }
+        .modal-header { padding: 20px; background: var(--bg-app); border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 1.1rem; color: var(--text-dark); }
+        .btn-close-modal { background: none; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer; }
+        .modal-body { padding: 20px; }
+        /* --- CSS UNTUK MODAL & NOTIFIKASI DI HP --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 1000;
+            display: none; justify-content: center; align-items: flex-end; /* Muncul dari bawah di HP */
+            backdrop-filter: blur(3px);
+        }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.3s; }
+        .modal-box {
+            background: var(--bg-app); width: 100%; max-height: 85vh;
+            border-radius: 20px 20px 0 0; padding: 25px 20px;
+            overflow-y: auto; position: relative;
+            box-shadow: 0 -10px 25px rgba(0,0,0,0.1);
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .alert-banner {
+            background: #fff3f3; border: 1px solid #ffb8b8; color: var(--danger);
+            padding: 12px 15px; border-radius: 12px; margin-bottom: 20px;
+            display: flex; gap: 10px; align-items: flex-start; font-size: 0.85rem; line-height: 1.4;
+        }
+        .alert-banner.hidden { display: none; }
+        
+        .btn-menu-profil {
+            display: flex; align-items: center; justify-content: space-between;
+            background: white; padding: 18px 20px; border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03); margin-bottom: 12px;
+            border: none; width: 100%; text-align: left; cursor: pointer; transition: 0.2s;
+        }
+        .btn-menu-profil:active { transform: scale(0.98); }
+        .btn-menu-profil .icon-left { width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 15px; }
+    </style>
+</head>
+<body>
+    <div id="loadingOverlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-body); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-color);">
+        <i class="fa-solid fa-spinner fa-spin fa-3x" style="margin-bottom: 15px;"></i>
+        <h3>Menyiapkan Ruang Kelas...</h3>
+    </div>
+
+    <aside class="sidebar-nav">
+        <div class="brand-logo">
+            <img src="logo-hj.png" alt="Logo Hafizh Junior" style="width: 100px; height: 50px; object-fit: contain; margin-right: 10px; border-radius: 5px;">
+        </div>
+        <nav class="sidebar-menu">
+            <div class="nav-item active" data-target="view-home" onclick="switchView('view-home')"><i class="fa-solid fa-house-chimney"></i><span>Dashboard</span></div>
+            <div class="nav-item" data-target="view-riwayat" onclick="switchView('view-riwayat')">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Riwayat Absen</span>
+            </div>
+            <div class="nav-item" data-target="view-pengajuan" onclick="switchView('view-pengajuan')"><i class="fa-solid fa-file-pen"></i><span>Pengajuan</span></div>
+            <div class="nav-item" data-target="view-akademik" onclick="switchView('view-akademik')"><i class="fa-solid fa-book-open-reader"></i><span>Akademik</span></div>
+            <div class="nav-item" data-target="view-profil" onclick="switchView('view-profil')"><i class="fa-solid fa-user-shield"></i><span>Profil Akun</span></div>
+        </nav>
+    </aside>
+
+    <div id="main-content">
+        
+        <main id="view-home" class="view active">
+            <header class="header-profile">
+                <div>
+                    <h2 id="teksSapaan">Memuat...</h2>
+                    <p id="teksCabang"><i class="fa-solid fa-building-columns"></i> Memuat data cabang...</p>
+                </div>
+                <div class="badge-status" id="teksSesi">
+                    <i class="fa-solid fa-clock"></i> Memeriksa jadwal...
+                </div>
+            </header>
+
+            <div class="action-card">
+                <div class="live-clock" id="liveClock">00:00:00</div>
+                <div class="location-status" id="teksRadius">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                    <span>Mencari titik koordinat...</span>
+                </div>
+                <button class="btn-absen-raksasa" onclick="submitAbsenFirebase()" id="btnAbsen" disabled>
+                    <i class="fa-solid fa-spinner fa-spin"></i> Sedang Memuat Jadwal
+                </button>
+                
+                <button class="btn-badal" onclick="bukaModalBadal()">
+                    <i class="fa-solid fa-users-arrows-relational"></i> Absen Badal (Guru Pengganti)
+                </button>
+                
+            </div>
+
+            <div class="section-padding">
+                <h3 class="section-title" id="judulRingkasan">Ringkasan Bulan Ini</h3>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value text-green" id="countHadir">0</div>
+                        <div class="stat-label">Hadir Tepat</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value text-yellow" id="countTelat">0</div>
+                        <div class="stat-label">Terlambat</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value text-blue" id="countIzin">0</div>
+                        <div class="stat-label">Izin/Sakit</div>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Riwayat Terakhir</h3>
+                <div class="history-list" id="riwayatList">
+                    <div style="text-align: center; color: gray; font-size: 0.9rem; padding: 20px;">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Memuat riwayat...
+                    </div>
+                </div>
+            </div>
+        </main>
+        <main id="view-riwayat" class="view">
+            <header class="header-profile" style="padding-bottom: 30px; border-radius: 0 0 20px 20px;">
+                <h2><i class="fa-solid fa-clock-rotate-left"></i> Rekap Kehadiran</h2>
+                <p>Filter dan pantau riwayat absensi Anda.</p>
+            </header>
+
+            <div class="section-padding" style="margin-top: 20px;">
+                <div class="action-card" style="margin: 0 0 20px 0; padding: 20px; text-align: left;">
+                    <h3 style="margin-bottom: 15px; font-size: 1rem;"><i class="fa-solid fa-filter"></i> Filter Periode</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Dari Tanggal</label>
+                            <input type="date" id="filterStart" style="width: 100%; padding: 8px; border: 1px solid #dfe6e9; border-radius: 8px; outline: none;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Sampai</label>
+                            <input type="date" id="filterEnd" style="width: 100%; padding: 8px; border: 1px solid #dfe6e9; border-radius: 8px; outline: none;">
+                        </div>
+                    </div>
+                    <button onclick="terapkanFilterRiwayat()" class="btn-absen-raksasa" id="btnFilterRiwayat" style="padding: 10px; font-size: 0.95rem;">
+                        <i class="fa-solid fa-magnifying-glass"></i> Cari Data
+                    </button>
+                </div>
+
+                <div class="stats-grid" style="margin-bottom: 20px;">
+                    <div class="stat-card" style="padding: 15px 5px;"><div class="stat-value text-green" id="rekapHadir">0</div><div class="stat-label">Hadir</div></div>
+                    <div class="stat-card" style="padding: 15px 5px;"><div class="stat-value text-yellow" id="rekapTelat">0</div><div class="stat-label">Telat</div></div>
+                    <div class="stat-card" style="padding: 15px 5px;"><div class="stat-value text-blue" id="rekapIzin">0</div><div class="stat-label">Izin</div></div>
+                </div>
+
+                <h3 class="section-title">Hasil Pencarian</h3>
+                <div class="history-list" id="containerFilterRiwayat">
+                    <p style="text-align:center; color:gray; font-size:0.9rem; padding: 20px;">Pilih rentang tanggal dan klik tombol cari.</p>
+                </div>
+            </div>
+        </main>
+
+        <main id="view-pengajuan" class="view">
+            <header class="header-profile" style="padding-bottom: 30px; border-radius: 0 0 20px 20px;">
+                <h2><i class="fa-solid fa-file-pen"></i> Form Pengajuan</h2>
+                <p>Ajukan Izin/Sakit ke Admin Wilayah Anda.</p>
+            </header>
+
+            <div class="section-padding" style="margin-top: 20px;">
+                <div class="action-card" style="margin: 0 0 25px 0; padding: 25px; text-align: left;">
+                    <form id="formPengajuan" onsubmit="submitPengajuanFirebase(event)">
+                        <div class="input-group">
+                            <label>Periode Izin</label>
+                            <div style="display: flex; gap: 10px;">
+                                <div style="flex: 1;">
+                                    <small style="color:var(--text-muted); font-size:0.75rem;">Dari Tanggal</small>
+                                    <input type="date" id="inputIzinMulai" required style="width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 10px; font-size: 1rem; outline: none; margin-top: 4px;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <small style="color:var(--text-muted); font-size:0.75rem;">Sampai Tanggal</small>
+                                    <input type="date" id="inputIzinSelesai" required style="width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 10px; font-size: 1rem; outline: none; margin-top: 4px;">
+                                </div>
+                            </div>
+                            <small style="color: var(--info); font-size: 0.8rem; margin-top: 5px; display: block;"><i class="fa-solid fa-circle-info"></i> Pilih tanggal yang sama jika hanya izin 1 hari.</small>
+                        </div>
+                        <div class="input-group">
+                            <label>Jenis Pengajuan</label>
+                            <select id="inputIzinJenis" required style="width: 100%; padding: 12px 15px; border: 1px solid #dfe6e9; border-radius: 10px; font-size: 1rem; outline: none; background: white;">
+                                <option value="" disabled selected>Pilih jenis...</option>
+                                <option value="Sakit">Sakit</option>
+                                <option value="Izin Keperluan">Izin Keperluan / Acara</option>
+                                <option value="Cuti">Cuti Panjang</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Keterangan / Alasan Lengkap</label>
+                            <textarea id="inputIzinAlasan" rows="3" required placeholder="Jelaskan alasan Anda di sini secara detail..." style="width: 100%; padding: 12px 15px; border: 1px solid #dfe6e9; border-radius: 10px; font-size: 1rem; outline: none; resize: none;"></textarea>
+                        </div>
+                        <button type="submit" class="btn-absen-raksasa" id="btnSubmitPengajuan" style="padding: 12px; font-size: 1rem; margin-top: 10px; background-color: var(--primary-color);">
+                            <i class="fa-solid fa-paper-plane"></i> Kirim Pengajuan
+                        </button>
+                    </form>
+                </div>
+
+                <h3 class="section-title">Status Pengajuan Saya</h3>
+                <div class="history-list" id="listPengajuan">
+                    <div style="text-align: center; color: gray; font-size: 0.9rem; padding: 20px;">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Memuat data...
+                    </div>
+                </div>
+            </div>
+        </main>
+        <main id="view-akademik" class="view dummy-view"><i class="fa-solid fa-book-open-reader fa-4x" style="color:var(--info); margin-bottom:20px; opacity: 0.5;"></i><h2>Modul Akademik</h2><p>Fitur ini sedang dalam tahap pengembangan.<br> In syaa Allah akan meliputi fitur pencatatan tahsin, tahfidz, ujian, hingga pembuatan rapor. <br> Mohon ditunggu ya...! </p></main>
+        <main id="view-profil" class="view">
+            <div style="text-align: center; padding-top: 10px;">
+                <div style="text-align: center; padding-top: 10px;">
+                
+                <div style="position: relative; display: inline-block; margin-bottom: 15px;">
+                    <img id="profilFoto" src="https://ui-avatars.com/api/?name=Guru&background=008f7a&color=fff" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer;" onclick="document.getElementById('inputFotoProfil').click()">
+                    
+                    <div style="position: absolute; bottom: 0; right: 0; background: var(--warning); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" onclick="document.getElementById('inputFotoProfil').click()">
+                        <i class="fa-solid fa-camera" id="iconCamera"></i>
+                    </div>
+                    
+                    <input type="file" id="inputFotoProfil" accept="image/*" style="display: none;" onchange="prosesKompresiFoto(event)">
+                </div>
+                <h2 id="profilNamaLengkapHeader" style="color: var(--text-dark); margin-bottom: 5px;">Memuat Nama...</h2>
+                <p id="profilCabangLengkap" style="color: var(--text-muted); margin-bottom: 25px; font-weight: bold; background: rgba(0, 143, 122, 0.1); display: inline-block; padding: 5px 15px; border-radius: 20px; color: var(--primary-color);">Memuat Wilayah...</p>
+            </div>
+
+            <div id="peringatanProfil" class="alert-banner hidden">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.2rem; margin-top: 2px;"></i>
+                <div>
+                    <strong>Biodata Belum Lengkap!</strong><br>
+                    Silakan lengkapi NIK, No. HP, dan Rekening Gaji Anda agar pembayaran honor bulan ini tidak terkendala.
+                </div>
+            </div>
+
+            <button class="btn-menu-profil" onclick="bukaModalProfil()">
+                <div style="display: flex; align-items: center;">
+                    <div class="icon-left" style="background: var(--primary-color);"><i class="fa-solid fa-address-card"></i></div>
+                    <div>
+                        <strong style="color: var(--text-dark); display: block; font-size: 1rem;" id="teksTombolProfil">Lengkapi Biodata</strong>
+                        <span style="color: gray; font-size: 0.75rem;">Informasi KTP, Kontak & Rekening</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: #cbd5e1;"></i>
+            </button>
+
+            <button class="btn-menu-profil" onclick="bukaModalPassword()">
+                <div style="display: flex; align-items: center;">
+                    <div class="icon-left" style="background: var(--warning);"><i class="fa-solid fa-key"></i></div>
+                    <div>
+                        <strong style="color: var(--text-dark); display: block; font-size: 1rem;">Ganti Password</strong>
+                        <span style="color: gray; font-size: 0.75rem;">Perbarui kata sandi akun Anda</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: #cbd5e1;"></i>
+            </button>
+
+            <button onclick="logoutFirebase()" class="btn-menu-profil" style="margin-top: 30px; border: 1.5px solid var(--danger); box-shadow: none;">
+                <div style="display: flex; align-items: center;">
+                    <div class="icon-left" style="background: #fff3f3; color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i></div>
+                    <strong style="color: var(--danger); display: block; font-size: 1rem;">Keluar Aplikasi</strong>
+                </div>
+            </button>
+
+            <div id="modalEditProfil" class="modal-overlay">
+                <div class="modal-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-dark);"><i class="fa-solid fa-address-card" style="color: var(--primary-color);"></i> Form Biodata</h3>
+                        <button onclick="tutupModalProfil()" style="background: none; border: none; font-size: 1.5rem; color: gray; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    
+                    <form id="formProfil" onsubmit="simpanProfilGuru(event)">
+                        <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee;">
+                            <label style="font-size: 0.8rem; color: gray; display: block; margin-bottom: 5px;">Nama Lengkap (Sesuai Kontrak)</label>
+                            <input type="text" id="profilNama" readonly style="width: 100%; padding: 10px; border-radius: 8px; border: none; background: #f4f7f6; color: gray; font-weight: bold; margin-bottom: 10px;">
+                            <label style="font-size: 0.8rem; color: gray; display: block; margin-bottom: 5px;">Email / Akun Login</label>
+                            <input type="text" id="profilEmail" readonly style="width: 100%; padding: 10px; border-radius: 8px; border: none; background: #f4f7f6; color: gray;">
+                        </div>
+
+                        <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--primary-color); border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
+                            <p style="font-size: 0.85rem; color: var(--primary-color); font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-address-book"></i> Demografi & Kontak</p>
+                            
+                            <input type="number" id="profilNIK" placeholder="16 Digit NIK KTP *" required minlength="16" style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                            <input type="number" id="profilNoHP" placeholder="No. HP / WhatsApp Aktif *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                <input type="text" id="profilTempatLahir" placeholder="Kota Lahir *" required style="width: 50%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
+                                <input type="date" id="profilTglLahir" required style="width: 50%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
+                            </div>
+                            <textarea id="profilAlamat" rows="2" placeholder="Alamat Domisili Sekarang Lengkap *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;"></textarea>
+                            <select id="profilStatusNikah" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; background: white;">
+                                <option value="" disabled selected>-- Pilih Status Pernikahan * --</option>
+                                <option value="Belum Menikah">Belum Menikah</option>
+                                <option value="Menikah">Menikah</option>
+                            </select>
+                        </div>
+
+                        <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--info); border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
+                            <p style="font-size: 0.85rem; color: var(--info); font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-graduation-cap"></i> Akademik & Status Kepegawaian</p>
+                            
+                            <select id="profilStatusNH" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px; background: white;">
+                                <option value="" disabled selected>-- Pilih Status di Nurul Hayat * --</option>
+                                <option value="Santri Khidmat">Santri Khidmat (Karyawan NH)</option>
+                                <option value="Istri Santri Khidmat">Istri dari Santri Khidmat</option>
+                                <option value="Mudabbir/ah Muqim">Mudabbir / Mudabbirah Muqim</option>
+                                <option value="Mustami Non Muqim">Mustami' Non Muqim</option>
+                                <option value="Mitra Pengajar Eksternal">Mitra Pengajar Eksternal (Murni HJ)</option>
+                            </select>
+                            
+                            <input type="text" id="profilPendidikan" placeholder="Pend. Terakhir (Misal: S1 PAI) *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                            <input type="text" id="profilHafalan" placeholder="Hafalan / Syahadah (Misal: 5 Juz / Ummi) *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                            <input type="text" id="profilNamaDarurat" placeholder="Kontak Darurat: Nama Keluarga *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                            <input type="number" id="profilNoHPDarurat" placeholder="Kontak Darurat: No. HP *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
+                        </div>
+
+                        <div style="background: #fff9f9; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px dashed #ffb8b8;">
+                            <p style="font-size: 0.85rem; color: var(--danger); font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-money-check-dollar"></i> Informasi Rekening Gaji</p>
+                            
+                            <input type="text" id="profilBank" placeholder="Nama Bank (Misal: BSI) *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                            <input type="number" id="profilNoRekening" placeholder="Nomor Rekening Bank *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                            <input type="text" id="profilNamaRekening" placeholder="Atas Nama (Sesuai Buku Tabungan) *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none;">
+                        </div>
+
+                        <button type="submit" id="btnSimpanProfil" style="width: 100%; padding: 15px; background: var(--primary-color); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-bottom: 20px;"><i class="fa-solid fa-floppy-disk"></i> Simpan Semua Biodata</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="modalGantiPassword" class="modal-overlay">
+                <div class="modal-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-dark);"><i class="fa-solid fa-key" style="color: var(--warning);"></i> Keamanan Akun</h3>
+                        <button onclick="tutupModalPassword()" style="background: none; border: none; font-size: 1.5rem; color: gray; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    
+                    <form id="formGantiPassword" onsubmit="gantiPasswordGuru(event)">
+                        <div style="margin-bottom: 15px;">
+                            <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Password LAMA Anda</label>
+                            <input type="password" id="profilPassLama" placeholder="Masukkan password saat ini" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
+                        </div>
+                        <div style="margin-bottom: 25px;">
+                            <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Password BARU</label>
+                            <input type="password" id="profilPassBaru" placeholder="Minimal 6 karakter" required minlength="6" style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
+                        </div>
+                        <button type="submit" id="btnGantiPass" style="width: 100%; padding: 15px; background: var(--warning); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-bottom: 20px;"><i class="fa-solid fa-shield-halved"></i> Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+    </div> 
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" data-target="view-home" onclick="switchView('view-home')"><i class="fa-solid fa-house-chimney"></i><span>Home</span></div>
+        <div class="nav-item" data-target="view-riwayat" onclick="switchView('view-riwayat')">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Riwayat Absen</span>
+            </div>
+        <div class="nav-item" data-target="view-pengajuan" onclick="switchView('view-pengajuan')"><i class="fa-solid fa-file-pen"></i><span>Izin</span></div>
+        <div class="nav-item" data-target="view-akademik" onclick="switchView('view-akademik')"><i class="fa-solid fa-book-open-reader"></i><span>Akademik</span></div>
+        <div class="nav-item" data-target="view-profil" onclick="switchView('view-profil')"><i class="fa-solid fa-user"></i><span>Profil</span></div>
+    </nav>
+    <div id="modalBadal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-users-arrows-relational" style="color:var(--info);"></i> Form Absen Badal</h3>
+                <button class="btn-close-modal" onclick="tutupModalBadal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="formBadal" onsubmit="submitAbsenBadalFirebase(event)">
+                    <div class="input-group">
+                        <label>Siapa Guru yang Anda Gantikan?</label>
+                        <select id="inputBadalGuru" required style="width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 10px; outline: none; background: white;">
+                            <option value="" disabled selected>Memuat daftar guru...</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Cabang Lokasi Badal</label>
+                        <select id="inputBadalCabang" required style="width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 10px; outline: none; background: white;">
+                            <option value="" disabled selected>Memuat daftar cabang...</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Sesi Waktu</label>
+                        <select id="inputBadalSesi" required style="width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 10px; outline: none; background: white;">
+                            <option value="" disabled selected>Memuat daftar sesi...</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-absen-raksasa" id="btnSubmitBadal" style="background-color: var(--info); box-shadow: 0 4px 15px rgba(9, 132, 227, 0.3); padding: 14px; margin-top: 15px;">
+                        <i class="fa-solid fa-location-crosshairs"></i> Deteksi GPS & Simpan Badal
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<script>
+    function startClock() {
+        const clockEl = document.getElementById('liveClock');
+        if(!clockEl) return;
+        setInterval(() => {
+            const now = new Date();
+            clockEl.innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }, 1000);
+    }
+    startClock();
+
+    function switchView(viewId) {
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(item => {
+            if(item.getAttribute('data-target') === viewId) item.classList.add('active');
+            else item.classList.remove('active');
+        });
+        document.getElementById('main-content').scrollTop = 0;
+    }
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    // IMPORT BARU: query, where, getDocs untuk mencari jadwal!
+    import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyDN_okDhvmPQQ2mAoZqGnrwZ0C7lL6YQDU",
+        authDomain: "hafizh-junior-portal.firebaseapp.com",
+        projectId: "hafizh-junior-portal",
+        storageBucket: "hafizh-junior-portal.firebasestorage.app",
+        messagingSenderId: "840125196141",
+        appId: "1:840125196141:web:4e57c5f7e21c91085a9c64"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // Variabel Global untuk menyimpan relasi data
+    window.currentUser = null;
+    window.jadwalHariIni = null;
+    window.cabangHariIni = null;
+    window.sesiHariIni = null;
+
+    // --- 1. LISTENER STATUS LOGIN ---
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const docRef = doc(db, "users", user.uid);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists() && docSnap.data().role === 'guru') {
+                window.currentUser = docSnap.data();
+                
+                // Update UI Profil Dasar
+                document.getElementById('teksSapaan').innerText = `Assalamu'alaikum, ${window.currentUser.nama}`;
+                
+                window.cekKelengkapanProfil(window.currentUser);
+                
+                // BUKA GEMBOK LOADING
+                document.getElementById('loadingOverlay').style.display = 'none';
+
+                // JALANKAN MESIN PENCARI JADWAL!
+                await muatJadwalDanCabang(user.uid);
+                
+                // JALANKAN MESIN RIWAYAT!
+                await muatRingkasanDanRiwayat(user.uid); 
+
+                window.loadDataPengajuan();
+
+            } else {
+                alert("Akses Ditolak: Akun ini bukan Guru.");
+                signOut(auth).then(() => {
+                    window.location.href = 'login.html'; // TENDANG KE LOGIN
+                });
+            }
+        } else {
+            // JIKA BELUM LOGIN, TENDANG KE LOGIN
+            window.location.href = 'login.html';
+        }
+    });
+
+    // --- 2. MESIN PENCARI JADWAL CERDAS (BARU) ---
+    async function muatJadwalDanCabang(uid) {
+        // A. Tentukan hari ini (Bahasa Indonesia)
+        const namaHariArr = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+        const hariIni = namaHariArr[new Date().getDay()];
+
+        // B. Cari Jadwal di Firestore
+        const q = query(collection(db, "jadwal"), where("uid_guru", "==", uid), where("hari", "array-contains", hariIni));
+        const querySnapshot = await getDocs(q);
+
+        const btnAbsen = document.getElementById('btnAbsen');
+        const teksCabang = document.getElementById('teksCabang');
+        const teksSesi = document.getElementById('teksSesi');
+        const teksRadius = document.querySelector('.location-status span');
+
+        if (querySnapshot.empty) {
+            // JIKA TIDAK ADA JADWAL HARI INI
+            teksCabang.innerHTML = `<i class="fa-solid fa-house"></i> Selamat Beristirahat`;
+            teksSesi.innerHTML = `<i class="fa-solid fa-bed"></i> Tidak ada jadwal hari ini`;
+            teksRadius.innerText = `Sistem Absensi Nonaktif`;
+            document.getElementById('profilCabangLengkap').innerText = "Libur";
+            
+            btnAbsen.innerHTML = `<i class="fa-solid fa-lock"></i> Terkunci (Libur)`;
+            btnAbsen.disabled = true;
+            return;
+        }
+
+        // C. JIKA ADA JADWAL: Tarik Relasi Data Cabang & Sesi
+        window.jadwalHariIni = querySnapshot.docs[0].data(); // Ambil jadwal pertama
+        
+        const cabangSnap = await getDoc(doc(db, "cabang", window.jadwalHariIni.id_cabang));
+        const sesiSnap = await getDoc(doc(db, "master_sesi", window.jadwalHariIni.id_sesi));
+
+        if(cabangSnap.exists()) window.cabangHariIni = cabangSnap.data();
+        if(sesiSnap.exists()) window.sesiHariIni = sesiSnap.data();
+
+        // D. Update Layar dengan Data Asli!
+        teksCabang.innerHTML = `<i class="fa-solid fa-building-columns"></i> ${window.cabangHariIni.nama}`;
+        document.getElementById('profilCabangLengkap').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${window.cabangHariIni.nama}`;
+        
+        teksSesi.innerHTML = `<i class="fa-solid fa-clock"></i> ${window.sesiHariIni.nama_sesi} (${window.sesiHariIni.jam_masuk})`;
+        teksRadius.innerText = `Target GPS: Radius ${window.cabangHariIni.radius} meter`;
+        
+        btnAbsen.innerHTML = `<i class="fa-solid fa-fingerprint"></i> Absen Masuk Sesi Ini`;
+        btnAbsen.disabled = false;
+    }
+
+    // --- 3. FUNGSI LOGOUT ---
+    window.logoutFirebase = function() {
+        if (confirm("Apakah Anda yakin ingin keluar dari aplikasi?")) {
+            // Mencari tombol logout di dalam panel profil agar bisa diberi efek loading
+            const btnLogout = document.querySelector('#view-profil button[onclick="logoutFirebase()"]');
+            const originalHTML = btnLogout ? btnLogout.innerHTML : '';
+            
+            if (btnLogout) btnLogout.innerHTML = '<div style="display: flex; align-items: center;"><div class="icon-left" style="background: #fff3f3; color: var(--danger);"><i class="fa-solid fa-spinner fa-spin"></i></div><strong style="color: var(--danger); display: block; font-size: 1rem;">Keluar...</strong></div>';
+            
+            signOut(auth).then(() => {
+                window.location.href = 'index.html'; // OTOMATIS KEMBALI KE PORTAL DEPAN
+            }).catch((error) => {
+                alert("Gagal logout. Periksa koneksi internet Anda.");
+                if (btnLogout) btnLogout.innerHTML = originalHTML; // Kembalikan ke tampilan semula jika gagal
+            });
+        }
+    };
+    // --- 4. RUMUS JARAK ---
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; const φ1 = lat1 * Math.PI / 180; const φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180; const Δλ = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    // --- 5. EKSEKUSI ABSEN DENGAN DATA DINAMIS ---
+    window.submitAbsenFirebase = function() {
+        const guru = window.currentUser;
+        if (!window.isProfilLengkap) {
+            alert("⛔ AKSES ABSEN DITOLAK!\n\nSeluruh form Biodata wajib terisi 100%. Anda tidak bisa melakukan absensi sebelum melengkapinya.");
+            switchView('view-profil');
+            bukaModalProfil();
+            return; 
+        }
+        if (window.isWaktunyaUpdate) {
+            alert("⚠️ PERINGATAN SISTEM (SIKLUS 6 BULAN)\n\nSudah waktunya Anda meninjau ulang kelengkapan data diri. Silakan buka profil, periksa data Anda, dan tekan tombol Simpan di paling bawah.");
+            switchView('view-profil');
+            bukaModalProfil();
+            return; 
+        }
+        const btn = document.getElementById('btnAbsen');
+        const statusLokasi = document.querySelector('.location-status span');
+        const iconLokasi = document.querySelector('.location-status i');
+        const originalText = btn.innerHTML;
+
+        if (!window.jadwalHariIni || !window.cabangHariIni || !window.sesiHariIni) {
+            alert("Data jadwal atau cabang belum lengkap dimuat!"); return;
+        }
+
+        btn.innerHTML = '<i class="fa-solid fa-satellite-dish fa-beat"></i> Mengecek GPS...';
+        btn.disabled = true;
+
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const latUser = pos.coords.latitude;
+                const lonUser = pos.coords.longitude;
+                // Hitung jarak menggunakan koordinat asli dari database Admin Wilayah!
+                const jarak = calculateDistance(window.cabangHariIni.koordinat.lat, window.cabangHariIni.koordinat.lon, latUser, lonUser);
+
+                statusLokasi.innerText = `Jarak dengan cabang: ${Math.round(jarak)}m`;
+
+                // Validasi Radius dari database
+                if (jarak > window.cabangHariIni.radius) {
+                    iconLokasi.className = "fa-solid fa-circle-xmark"; iconLokasi.style.color = "var(--danger)";
+                    alert(`❌ Terlalu jauh! Anda berjarak ${Math.round(jarak)}m. Maksimal ${window.cabangHariIni.radius}m.`);
+                    btn.innerHTML = originalText; btn.disabled = false;
+                    return; 
+                }
+
+                // Lolos! Kirim ke Firebase
+                iconLokasi.className = "fa-solid fa-circle-check"; iconLokasi.style.color = "var(--primary-color)";
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+
+                try {
+                    await addDoc(collection(db, "absensi"), {
+                        uid_guru: auth.currentUser.uid,
+                        nama_guru: window.currentUser.nama,
+                        id_jadwal: window.jadwalHariIni.id_jadwal,
+                        cabang_absen: window.cabangHariIni.nama,
+                        sesi_absen: window.sesiHariIni.nama_sesi,
+                        status: "Hadir",
+                        koordinat: { lat: latUser, lon: lonUser },
+                        jarak_meter: Math.round(jarak),
+                        timestamp: serverTimestamp()
+                    });
+
+                    btn.innerHTML = `<i class="fa-solid fa-check-double"></i> Absen Tersimpan!`;
+                    btn.style.backgroundColor = "var(--primary-color)"; 
+                    
+                    setTimeout(() => { btn.innerHTML = `<i class="fa-solid fa-lock"></i> Selesai`; }, 3000);
+                } catch (e) {
+                    alert("❌ Gagal menyimpan."); btn.innerHTML = originalText; btn.disabled = false;
+                }
+            },
+            (err) => { alert("❌ GPS tidak terdeteksi. Izinkan akses lokasi."); btn.innerHTML = originalText; btn.disabled = false; },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    };
+    // --- 6. MESIN PENGHITUNG RINGKASAN & RIWAYAT (BARU) ---
+    async function muatRingkasanDanRiwayat(uid) {
+        // 1. Set Judul Bulan & Tahun Secara Otomatis
+        const now = new Date();
+        const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        document.getElementById('judulRingkasan').innerText = `Ringkasan ${namaBulan[now.getMonth()]} ${now.getFullYear()}`;
+
+        // 2. Tarik Data dari Firestore (Ambil semua absen milik Guru ini)
+        const qAbsen = query(collection(db, "absensi"), where("uid_guru", "==", uid));
+        const snapshot = await getDocs(qAbsen);
+
+        let dataAbsen = [];
+        snapshot.forEach(doc => { dataAbsen.push(doc.data()); });
+
+        // 3. Urutkan data dari yang paling baru (Descending)
+        dataAbsen.sort((a, b) => {
+            const timeA = a.timestamp ? a.timestamp.toMillis() : 0;
+            const timeB = b.timestamp ? b.timestamp.toMillis() : 0;
+            return timeB - timeA;
+        });
+
+        // 4. Filter data khusus bulan ini untuk dihitung
+        const bulanIni = now.getMonth();
+        const tahunIni = now.getFullYear();
+        let hadir = 0, telat = 0, izin = 0;
+
+        dataAbsen.forEach(absen => {
+            if(absen.timestamp) {
+                const tglAbsen = absen.timestamp.toDate();
+                if(tglAbsen.getMonth() === bulanIni && tglAbsen.getFullYear() === tahunIni) {
+                    if(absen.status === "Hadir") hadir++;
+                    else if(absen.status === "Terlambat") telat++;
+                    else if(absen.status === "Izin" || absen.status === "Sakit") izin++;
+                }
+            }
+        });
+
+        // Tampilkan angkanya ke layar
+        document.getElementById('countHadir').innerText = hadir;
+        document.getElementById('countTelat').innerText = telat;
+        document.getElementById('countIzin').innerText = izin;
+
+        // 5. Tampilkan 3 Riwayat Terakhir
+        const riwayatList = document.getElementById('riwayatList');
+        riwayatList.innerHTML = ''; // Kosongkan tulisan "Memuat..."
+
+        if(dataAbsen.length === 0) {
+            riwayatList.innerHTML = '<p style="text-align:center; color:gray; font-size:0.9rem;">Belum ada riwayat absen.</p>';
+            return;
+        }
+
+        const riwayatTerbaru = dataAbsen.slice(0, 3); // Ambil 3 teratas
+        riwayatTerbaru.forEach(absen => {
+            const tgl = absen.timestamp ? absen.timestamp.toDate() : new Date();
+            const formatTgl = tgl.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
+            const formatJam = tgl.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            
+            // Set Warna sesuai status
+            let colorClass = "text-green"; let borderClass = "";
+            if(absen.status === "Terlambat") { colorClass = "text-yellow"; borderClass = "terlambat"; }
+            if(absen.status === "Izin" || absen.status === "Sakit") { colorClass = "text-blue"; borderClass = "izin"; }
+
+            const div = document.createElement('div');
+            div.className = `history-item ${borderClass}`;
+            div.innerHTML = `
+                <div class="history-info">
+                    <h4>${formatTgl}</h4>
+                    <p><i class="fa-solid fa-calendar-day"></i> Sesi ${absen.sesi_absen || absen.waktu_shift || '-'}</p>
+                </div>
+                <div class="history-status">
+                    <span class="${colorClass}">${absen.status}</span>
+                    <small>${formatJam} WIB</small>
+                </div>
+            `;
+            riwayatList.appendChild(div);
+        });
+    }
+    // --- 7. MESIN FILTER PUSAT RIWAYAT (BARU) ---
+    window.terapkanFilterRiwayat = async function() {
+        const startDateStr = document.getElementById('filterStart').value;
+        const endDateStr = document.getElementById('filterEnd').value;
+        
+        if(!startDateStr || !endDateStr) {
+            alert("Harap pilih 'Dari Tanggal' dan 'Sampai Tanggal' terlebih dahulu!"); return;
+        }
+
+        const btn = document.getElementById('btnFilterRiwayat');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memuat...';
+        btn.disabled = true;
+
+        try {
+            // Konversi input string menjadi objek Date JavaScript
+            const start = new Date(startDateStr); start.setHours(0, 0, 0, 0); // Jam 00:00 awal hari
+            const end = new Date(endDateStr); end.setHours(23, 59, 59, 999);  // Jam 23:59 akhir hari
+
+            // Query Canggih Firebase (Kombinasi User ID + Rentang Waktu)
+            const q = query(
+                collection(db, "absensi"), 
+                where("uid_guru", "==", auth.currentUser.uid),
+                where("timestamp", ">=", start),
+                where("timestamp", "<=", end)
+            );
+
+            const snapshot = await getDocs(q);
+            
+            let hadir = 0, telat = 0, izin = 0;
+            const container = document.getElementById('containerFilterRiwayat');
+            container.innerHTML = '';
+
+            if(snapshot.empty) {
+                container.innerHTML = '<p style="text-align:center; color:gray; font-size:0.9rem; padding:20px;">Tidak ada riwayat absensi di rentang tanggal ini.</p>';
+            } else {
+                // Tarik data dan urutkan dari yang terbaru
+                let dataAbsen = [];
+                snapshot.forEach(doc => dataAbsen.push(doc.data()));
+                dataAbsen.sort((a,b) => b.timestamp.toMillis() - a.timestamp.toMillis());
+
+                // Looping untuk merender (menggambar) HTML
+                dataAbsen.forEach(absen => {
+                    if(absen.status === "Hadir") hadir++;
+                    else if(absen.status === "Terlambat") telat++;
+                    else if(absen.status === "Izin" || absen.status === "Sakit") izin++;
+
+                    const tgl = absen.timestamp.toDate();
+                    const formatTgl = tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                    const formatJam = tgl.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                    
+                    let colorClass = "text-green"; let borderClass = "";
+                    if(absen.status === "Terlambat") { colorClass = "text-yellow"; borderClass = "terlambat"; }
+                    if(absen.status === "Izin" || absen.status === "Sakit") { colorClass = "text-blue"; borderClass = "izin"; }
+
+                    const div = document.createElement('div');
+                    div.className = `history-item ${borderClass}`;
+                    div.innerHTML = `
+                        <div class="history-info">
+                            <h4>${formatTgl}</h4>
+                            <p><i class="fa-solid fa-building-columns"></i> ${absen.cabang_absen || 'Cabang'}</p>
+                        </div>
+                        <div class="history-status">
+                            <span class="${colorClass}">${absen.status}</span>
+                            <small>${formatJam} WIB</small>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            // Update Angka Rekap
+            document.getElementById('rekapHadir').innerText = hadir;
+            document.getElementById('rekapTelat').innerText = telat;
+            document.getElementById('rekapIzin').innerText = izin;
+
+        } catch (error) {
+            console.error("Filter Error:", error);
+            // PROTEKSI ERROR INDEX FIREBASE
+            if (error.message.includes("index")) {
+                alert("Sistem Firebase mendeteksi pencarian baru. Silakan minta Super Admin untuk mengeklik link pembuatan Index di Console Browser (F12).");
+            } else {
+                alert("Gagal menarik data riwayat. Periksa koneksi internet.");
+            }
+        } finally {
+            btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Cari Data';
+            btn.disabled = false;
+        }
+    };
+    // --- 8. MODUL PENGAJUAN IZIN ---
+    window.submitPengajuanFirebase = async function(e) {
+        e.preventDefault();
+        
+        const tglMulai = document.getElementById('inputIzinMulai').value;
+        const tglSelesai = document.getElementById('inputIzinSelesai').value;
+
+        // Validasi Cerdas: Tanggal selesai tidak boleh mendahului tanggal mulai!
+        if (new Date(tglSelesai) < new Date(tglMulai)) {
+            alert("❌ Tanggal 'Sampai' tidak boleh lebih awal dari tanggal 'Dari'!");
+            return;
+        }
+
+        const btn = document.getElementById('btnSubmitPengajuan');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
+        btn.disabled = true;
+
+        try {
+            await addDoc(collection(db, "pengajuan_izin"), {
+                uid_guru: auth.currentUser.uid,
+                nama_guru: window.currentUser.nama,
+                id_wilayah: window.currentUser.id_wilayah || "PUSAT", 
+                tanggal_mulai: tglMulai,       // <-- SIMPAN TGL MULAI
+                tanggal_selesai: tglSelesai,   // <-- SIMPAN TGL SELESAI
+                jenis: document.getElementById('inputIzinJenis').value,
+                alasan: document.getElementById('inputIzinAlasan').value.trim(),
+                status: "Menunggu", 
+                timestamp: serverTimestamp()
+            });
+
+            document.getElementById('formPengajuan').reset();
+            alert("✅ Pengajuan berhasil dikirim! Silakan tunggu konfirmasi Admin.");
+        } catch (error) {
+            console.error("Error Pengajuan:", error);
+            alert("❌ Gagal mengirim pengajuan. Coba lagi.");
+        } finally {
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Pengajuan';
+            btn.disabled = false;
+        }
+    };
+
+    // Fungsi membaca riwayat pengajuan secara REAL-TIME
+    window.loadDataPengajuan = function() {
+        const list = document.getElementById('listPengajuan');
+        const q = query(collection(db, "pengajuan_izin"), where("uid_guru", "==", auth.currentUser.uid));
+
+        // onSnapshot membuat data akan berubah sendiri tanpa perlu direfresh
+        onSnapshot(q, (snapshot) => {
+            list.innerHTML = '';
+            if(snapshot.empty) {
+                list.innerHTML = '<p style="text-align:center; color:gray; font-size:0.9rem; padding:20px;">Belum ada riwayat pengajuan.</p>';
+                return;
+            }
+
+            let dataPengajuan = [];
+            snapshot.forEach(doc => dataPengajuan.push(doc.data()));
+            
+            // Urutkan dari yang paling baru
+            dataPengajuan.sort((a,b) => {
+                const timeA = a.timestamp ? a.timestamp.toMillis() : 0;
+                const timeB = b.timestamp ? b.timestamp.toMillis() : 0;
+                return timeB - timeA;
+            });
+
+            dataPengajuan.forEach(data => {
+                let badgeColor = "#ffeaa7"; let textColor = "#d35400"; let icon = "fa-clock-rotate-left";
+                if(data.status === "Disetujui") { badgeColor = "#55efc4"; textColor = "#00b894"; icon = "fa-check"; } 
+                else if(data.status === "Ditolak") { badgeColor = "#ff7675"; textColor = "white"; icon = "fa-xmark"; }
+
+                // Deteksi format tanggal lama (kalau ada) vs format baru
+                const dateMulai = new Date(data.tanggal_mulai || data.tanggal_izin);
+                const dateSelesai = data.tanggal_selesai ? new Date(data.tanggal_selesai) : dateMulai;
+
+                const optDate = { day: 'numeric', month: 'short', year: 'numeric' };
+                const formatMulai = dateMulai.toLocaleDateString('id-ID', optDate);
+                const formatSelesai = dateSelesai.toLocaleDateString('id-ID', optDate);
+
+                // Logika Tampilan: Kalau cuma 1 hari, gabung. Kalau beda hari, pakai strip (-)
+                let teksTanggal = formatMulai;
+                if (formatMulai !== formatSelesai) {
+                    teksTanggal = `${formatMulai} - ${formatSelesai}`;
+                }
+
+                const div = document.createElement('div');
+                div.className = "history-item";
+                div.innerHTML = `
+                    <div class="history-info" style="flex: 1; padding-right: 10px;">
+                        <h4 style="margin-bottom: 5px; font-size:0.95rem;"><i class="fa-solid fa-calendar-xmark" style="color:var(--primary-color);"></i> ${teksTanggal}</h4>
+                        <p style="font-weight:bold; margin-bottom: 3px; color:var(--text-dark);">${data.jenis}</p>
+                        <p style="font-size:0.8rem; line-height:1.4;">"${data.alasan}"</p>
+                    </div>
+                    <div class="history-status" style="text-align: right;">
+                        <span style="background:${badgeColor}; color:${textColor}; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fa-solid ${icon}"></i> ${data.status}
+                        </span>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        });
+    };
+
+    // --- 9. MODUL ABSEN BADAL (GURU PENGGANTI) ---
+    window.bukaModalBadal = async () => {
+        const modal = document.getElementById('modalBadal');
+        modal.classList.add('active');
+        const wilayah = window.currentUser.id_wilayah;
+
+        // 1. Tarik Data Guru di wilayah yang sama
+        getDocs(query(collection(db, "users"), where("role", "==", "guru"), where("id_wilayah", "==", wilayah))).then(snap => {
+            let opts = '<option value="" disabled selected>Pilih nama guru...</option>';
+            snap.forEach(d => { 
+                // Jangan tampilkan nama sendiri di pilihan guru yang digantikan
+                if(d.id !== auth.currentUser.uid) opts += `<option value="${d.data().nama}">${d.data().nama}</option>`; 
+            });
+            document.getElementById('inputBadalGuru').innerHTML = opts;
+        });
+
+        // 2. Tarik Data Cabang (PENTING: Kita sisipkan lat, lon, dan radius di value-nya)
+        getDocs(query(collection(db, "cabang"), where("id_wilayah", "==", wilayah))).then(snap => {
+            let opts = '<option value="" disabled selected>Pilih lokasi cabang...</option>';
+            snap.forEach(d => { 
+                opts += `<option value="${d.data().nama}|${d.data().koordinat.lat}|${d.data().koordinat.lon}|${d.data().radius}">${d.data().nama}</option>`; 
+            });
+            document.getElementById('inputBadalCabang').innerHTML = opts;
+        });
+
+        // 3. Tarik Data Sesi
+        getDocs(query(collection(db, "master_sesi"), where("id_wilayah", "==", wilayah))).then(snap => {
+            let opts = '<option value="" disabled selected>Pilih sesi waktu...</option>';
+            snap.forEach(d => { opts += `<option value="${d.data().nama_sesi}">${d.data().nama_sesi} (${d.data().jam_masuk}-${d.data().jam_pulang})</option>`; });
+            document.getElementById('inputBadalSesi').innerHTML = opts;
+        });
+    };
+
+    window.tutupModalBadal = () => {
+        document.getElementById('modalBadal').classList.remove('active');
+        document.getElementById('formBadal').reset();
+    };
+
+    window.submitAbsenBadalFirebase = async (e) => {
+        e.preventDefault();
+        
+        const guruDigantikan = document.getElementById('inputBadalGuru').value;
+        const cabangDataRaw = document.getElementById('inputBadalCabang').value;
+        const sesiBadal = document.getElementById('inputBadalSesi').value;
+
+        // Pecah data cabang yang kita sisipkan tadi
+        const cabangData = cabangDataRaw.split('|'); 
+        const namaCabang = cabangData[0];
+        const targetLat = parseFloat(cabangData[1]);
+        const targetLon = parseFloat(cabangData[2]);
+        const targetRadius = parseInt(cabangData[3]);
+
+        const btn = document.getElementById('btnSubmitBadal');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-satellite-dish fa-beat"></i> Mencari Satelit GPS...';
+        btn.disabled = true;
+
+        if (!navigator.geolocation) {
+            alert("❌ Browser tidak mendukung GPS.");
+            btn.innerHTML = originalText; btn.disabled = false; return;
+        }
+
+        // Proses Pengecekan GPS
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const latUser = pos.coords.latitude;
+                const lonUser = pos.coords.longitude;
+                const jarak = calculateDistance(targetLat, targetLon, latUser, lonUser);
+
+                // Validasi Radius
+                if (jarak > targetRadius) {
+                    alert(`❌ Gagal! Anda berada di luar radius cabang ${namaCabang} (${Math.round(jarak)} meter). Maksimal jarak absen adalah ${targetRadius}m.`);
+                    btn.innerHTML = originalText; btn.disabled = false; return;
+                }
+
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan Absen...';
+
+                try {
+                    // Simpan data dengan status khusus "Hadir (Badal)"
+                    await addDoc(collection(db, "absensi"), {
+                        uid_guru: auth.currentUser.uid,
+                        nama_guru: window.currentUser.nama,
+                        guru_digantikan: guruDigantikan, // <-- Info krusial untuk Admin
+                        cabang_absen: namaCabang,
+                        sesi_absen: sesiBadal,
+                        status: "Hadir (Badal)",         // <-- Status spesial
+                        koordinat: { lat: latUser, lon: lonUser },
+                        jarak_meter: Math.round(jarak),
+                        timestamp: serverTimestamp()
+                    });
+
+                    tutupModalBadal();
+                    alert(`✅ Berhasil! Absen Badal untuk Ust. ${guruDigantikan} telah dicatat.`);
+                    
+                    // Segarkan riwayat di layar home agar absen barunya langsung muncul
+                    muatRingkasanDanRiwayat(auth.currentUser.uid);
+
+                } catch (err) {
+                    console.error(err); alert("❌ Gagal menyimpan absen badal.");
+                } finally {
+                    btn.innerHTML = originalText; btn.disabled = false;
+                }
+            },
+            (err) => { alert("❌ GPS tidak terdeteksi. Izinkan browser mengakses lokasi."); btn.innerHTML = originalText; btn.disabled = false; },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    };
+    // ==========================================
+        // MODUL 10: MANAJEMEN PROFIL (STRICT COMPLIANCE & 6-MONTH CYCLE)
+        // ==========================================
+
+        window.cekKelengkapanProfil = (data) => {
+            // 1. CEK KEWAJIBAN 100% (Semua kolom harus terisi)
+            const isLengkap = data.nik && data.no_hp && data.bank_rekening && data.bank_nama && data.bank_atasnama &&
+                              data.tempat_lahir && data.tgl_lahir && data.alamat && data.darurat_nama && 
+                              data.darurat_hp && data.status_nikah && data.pendidikan && data.hafalan && data.status_nh;
+            
+            window.isProfilLengkap = isLengkap; // Jadikan variabel global untuk Gembok Absen
+            window.isWaktunyaUpdate = false;    // Status Siklus 6 Bulan
+
+            const banner = document.getElementById('peringatanProfil');
+            const teksBanner = banner.querySelector('div');
+            const btnTeks = document.getElementById('teksTombolProfil');
+
+            if (!isLengkap) {
+                // JIKA DATA KOSONG/BELUM LENGKAP
+                banner.classList.remove('hidden');
+                banner.style.background = "#fff3f3";
+                banner.style.borderColor = "#ffb8b8";
+                banner.style.color = "var(--danger)";
+                teksBanner.innerHTML = "<strong>Biodata Belum Lengkap!</strong><br>Seluruh data wajib diisi 100% untuk keperluan administrasi yayasan.";
+                btnTeks.innerText = "Lengkapi Biodata Sekarang";
+                btnTeks.style.color = "var(--danger)";
+            } else {
+                // JIKA DATA LENGKAP -> CEK SIKLUS 6 BULAN!
+                if (data.terakhir_update_profil) {
+                    const lastUpdate = data.terakhir_update_profil.toDate();
+                    const now = new Date();
+                    // Menghitung selisih bulan
+                    const selisihBulan = (now.getFullYear() - lastUpdate.getFullYear()) * 12 + (now.getMonth() - lastUpdate.getMonth());
+                    
+                    if (selisihBulan >= 6) {
+                        window.isWaktunyaUpdate = true;
+                        banner.classList.remove('hidden');
+                        banner.style.background = "#fff8e1"; // Warna Kuning Peringatan
+                        banner.style.borderColor = "#ffe082";
+                        banner.style.color = "#f39c12";
+                        teksBanner.innerHTML = "<strong>Pembaruan Data 6 Bulanan!</strong><br>Mohon tinjau ulang dan simpan profil Anda jika ada perubahan kontak atau alamat.";
+                        btnTeks.innerText = "Tinjau & Konfirmasi Data";
+                        btnTeks.style.color = "#f39c12";
+                    } else {
+                        // JIKA AMAN SEMUA
+                        banner.classList.add('hidden');
+                        btnTeks.innerText = "Lihat Profil Saya";
+                        btnTeks.style.color = "var(--text-dark)";
+                    }
+                } else {
+                    // Kalau data sudah lengkap dari versi aplikasi lama (migrasi) tapi tidak ada cap waktu
+                    window.isWaktunyaUpdate = true;
+                    banner.classList.remove('hidden');
+                    banner.style.background = "#e3f2fd"; // Biru info
+                    banner.style.borderColor = "#90caf9";
+                    banner.style.color = "var(--info)";
+                    teksBanner.innerHTML = "<strong>Pembaruan Sistem Baru!</strong><br>Silakan buka profil Anda dan tekan tombol simpan untuk menyinkronkan data.";
+                    btnTeks.innerText = "Sinkronkan Profil";
+                    btnTeks.style.color = "var(--info)";
+                }
+            }
+
+            // AUTO-FILL DATA KE DALAM FORM
+            document.getElementById('profilNamaLengkapHeader').innerText = data.nama;
+            // --- LOAD FOTO PROFIL ---
+            if (data.foto_profil) {
+                document.getElementById('profilFoto').src = data.foto_profil;
+            } else {
+                // Jika belum punya foto, buatkan gambar inisial nama otomatis
+                document.getElementById('profilFoto').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.nama)}&background=008f7a&color=fff`;
+            }
+            document.getElementById('profilCabangLengkap').innerText = `Area Tugas: ${data.id_wilayah || 'PUSAT'}`;
+            document.getElementById('profilNama').value = data.nama;
+            document.getElementById('profilEmail').value = data.email || '-';
+            if(data.no_hp) document.getElementById('profilNoHP').value = data.no_hp;
+            if(data.nik) document.getElementById('profilNIK').value = data.nik;
+            if(data.bank_nama) document.getElementById('profilBank').value = data.bank_nama;
+            if(data.bank_rekening) document.getElementById('profilNoRekening').value = data.bank_rekening;
+            if(data.bank_atasnama) document.getElementById('profilNamaRekening').value = data.bank_atasnama;
+            if(data.tempat_lahir) document.getElementById('profilTempatLahir').value = data.tempat_lahir;
+            if(data.tgl_lahir) document.getElementById('profilTglLahir').value = data.tgl_lahir;
+            if(data.alamat) document.getElementById('profilAlamat').value = data.alamat;
+            if(data.darurat_nama) document.getElementById('profilNamaDarurat').value = data.darurat_nama;
+            if(data.darurat_hp) document.getElementById('profilNoHPDarurat').value = data.darurat_hp;
+            if(data.status_nikah) document.getElementById('profilStatusNikah').value = data.status_nikah;
+            if(data.pendidikan) document.getElementById('profilPendidikan').value = data.pendidikan;
+            if(data.hafalan) document.getElementById('profilHafalan').value = data.hafalan;
+            if(data.status_nh) document.getElementById('profilStatusNH').value = data.status_nh;
+        };
+
+        window.bukaModalProfil = () => document.getElementById('modalEditProfil').classList.add('active');
+        window.tutupModalProfil = () => document.getElementById('modalEditProfil').classList.remove('active');
+        
+        // AKSI SIMPAN BIODATA (MEREKAM WAKTU SERVER)
+        window.simpanProfilGuru = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSimpanProfil');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; btn.disabled = true;
+
+            try {
+                const newData = {
+                    no_hp: document.getElementById('profilNoHP').value,
+                    nik: document.getElementById('profilNIK').value,
+                    bank_nama: document.getElementById('profilBank').value,
+                    bank_rekening: document.getElementById('profilNoRekening').value,
+                    bank_atasnama: document.getElementById('profilNamaRekening').value,
+                    tempat_lahir: document.getElementById('profilTempatLahir').value,
+                    tgl_lahir: document.getElementById('profilTglLahir').value,
+                    alamat: document.getElementById('profilAlamat').value,
+                    darurat_nama: document.getElementById('profilNamaDarurat').value,
+                    darurat_hp: document.getElementById('profilNoHPDarurat').value,
+                    status_nikah: document.getElementById('profilStatusNikah').value,
+                    pendidikan: document.getElementById('profilPendidikan').value,
+                    hafalan: document.getElementById('profilHafalan').value,
+                    status_nh: document.getElementById('profilStatusNH').value,
+                    
+                    // INJEKSI CAP WAKTU OTOMATIS DARI SERVER GOOGLE UNTUK MENGHITUNG 6 BULAN
+                    terakhir_update_profil: serverTimestamp() 
+                };
+
+                await updateDoc(doc(db, "users", auth.currentUser.uid), newData);
+                
+                // Segarkan memori lokal agar gembok terbuka & peringatan hilang
+                Object.assign(window.currentUser, newData);
+                // Kita pura-pura inject timestamp lokal agar cekKelengkapanProfil langsung menganggap up-to-date
+                window.currentUser.terakhir_update_profil = { toDate: () => new Date() }; 
+                
+                cekKelengkapanProfil(window.currentUser);
+                tutupModalProfil();
+                alert("✅ Terima kasih! Biodata Anda sudah lengkap dan mutakhir.");
+            } catch (error) {
+                console.error(error); alert("❌ Gagal menyimpan biodata.");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Semua Biodata'; btn.disabled = false;
+            }
+        };
+        // ==========================================
+        // MESIN KOMPRESI FOTO (MAX 50KB) & AUTO-UPLOAD
+        // ==========================================
+        window.prosesKompresiFoto = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validasi: Cegah file di atas 5MB agar HP tidak hang saat mengompres
+            if (file.size > 5 * 1024 * 1024) {
+                alert("Ukuran foto asli terlalu besar. Maksimal 5MB."); return;
+            }
+
+            const iconCamera = document.getElementById('iconCamera');
+            iconCamera.className = "fa-solid fa-spinner fa-spin"; // Ubah jadi loading
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = async function() {
+                    // 1. Buat Kanvas Virtual di Memori HP
+                    const canvas = document.createElement('canvas');
+                    const MAX_SIZE = 300; // Resolusi maksimal 300x300 pixel
+                    let width = img.width;
+                    let height = img.height;
+
+                    // 2. Hitung Rasio Pengecilan (Menjaga proporsi)
+                    if (width > height) {
+                        if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+                    } else {
+                        if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // 3. Gambar ulang foto di kanvas dengan ukuran kecil
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // 4. Lakukan Kompresi Ekstrim! (Format JPEG, Kualitas 60%)
+                    // Hasilnya biasanya hanya berkisar 20KB - 50KB.
+                    const base64Foto = canvas.toDataURL('image/jpeg', 0.6);
+
+                    // 5. Update UI (Tampilkan langsung di layar)
+                    document.getElementById('profilFoto').src = base64Foto;
+                    
+                    // 6. Tembak ke Firebase Database
+                    try {
+                        await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                            foto_profil: base64Foto
+                        });
+                        window.currentUser.foto_profil = base64Foto; // Update memori lokal
+                        
+                        // Opsional: alert("Foto Profil berhasil diperbarui!");
+                    } catch (error) {
+                        console.error("Gagal unggah foto:", error);
+                        alert("Gagal memperbarui foto profil.");
+                    } finally {
+                        iconCamera.className = "fa-solid fa-camera"; // Kembalikan ikon
+                    }
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        };
+</script>
+
+</body>
+</html>
