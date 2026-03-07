@@ -278,6 +278,9 @@
             </div>
             
             <div class="user-profile">
+                
+                <button id="btnSwitchMode" onclick="window.location.href='guru.html'" style="display:none; background: var(--info); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-right: 15px; transition: 0.2s;"><i class="fa-solid fa-location-dot"></i> Mode Absen</button>
+                
                 <div class="user-info">
                     <div class="user-name" id="adminName">Memuat...</div>
                     <div class="user-role" id="adminRole">Memuat...</div> 
@@ -319,6 +322,17 @@
                         </div>
                     </div>
                 </div>
+                <div style="background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-top: 25px; border-left: 5px solid #0984e3;">
+                        <h3 style="margin-bottom: 10px; color: var(--text-dark);"><i class="fa-solid fa-bullhorn" style="color: #0984e3;"></i> Broadcast Pengumuman Pusat</h3>
+                        <p style="color: gray; font-size: 0.9rem; margin-bottom: 15px;">Pesan yang Anda kirim di sini akan muncul sebagai pop-up utama di layar HP seluruh pengajar SiHaju se-Indonesia.</p>
+                        
+                        <div style="display: flex; gap: 15px;">
+                            <input type="text" id="inputJudulBroadcast" placeholder="Judul Pengumuman (Cth: Libur Idul Adha)" style="width: 30%; padding: 12px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none;">
+                            <input type="text" id="inputIsiBroadcast" placeholder="Isi pesan singkat..." style="width: 50%; padding: 12px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none;">
+                            <button onclick="kirimBroadcastPusat()" style="width: 20%; background: #0984e3; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s;"><i class="fa-regular fa-paper-plane"></i> Kirim Pesan</button>
+                        </div>
+                        <div id="statusBroadcast" style="margin-top: 10px; font-size: 0.85rem; font-weight: bold;"></div>
+                    </div>
             </div>
 
             <div id="panel-wilayah" class="panel">
@@ -361,6 +375,26 @@
                             <input type="text" id="inputNamaWilayah" placeholder="Contoh: Surabaya Timur" required>
                         </div>
                         <button type="submit" class="btn-submit" id="btnSimpanWilayah">Simpan Data</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="modalEditWilayah" class="modal-overlay">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <h3><i class="fa-solid fa-map-location-dot" style="color:var(--info);"></i> Edit Data Wilayah</h3>
+                        <button class="btn-close-modal" onclick="tutupModalEditWilayah()"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <form id="formEditWilayah" onsubmit="simpanEditWilayahFirebase(event)">
+                        <div class="form-group">
+                            <label>Kode Wilayah (ID Unik)</label>
+                            <input type="text" id="editKodeWilayah" required readonly style="background:#f4f7f6; color:gray; font-weight:bold;">
+                        </div>
+                        <div class="form-group">
+                            <label>Nama Area / Regional Baru</label>
+                            <input type="text" id="editNamaWilayah" required>
+                        </div>
+                        <button type="submit" class="btn-submit" id="btnSimpanEditWilayah" style="background:var(--info);">Update Wilayah</button>
                     </form>
                 </div>
             </div>
@@ -482,22 +516,25 @@
             <div id="modalImport" class="modal-overlay">
                 <div class="modal-box">
                     <div class="modal-header">
-                        <h3><i class="fa-solid fa-file-csv" style="color:#0984e3;"></i> Import Data Guru (CSV)</h3>
+                        <h3><i class="fa-solid fa-file-csv" style="color:#0984e3;"></i> Import Data Pengguna (CSV)</h3>
                         <button class="btn-close-modal" onclick="tutupModalImport()"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-                    <div style="margin-bottom: 20px; background: rgba(9,132,227,0.1); padding: 15px; border-radius: 10px; font-size: 0.85rem; color: #2d3436;">
-                        <strong>Format File (.csv):</strong><br>
-                        Buat 3 kolom di Excel tanpa baris judul (header):<br>
+                    <div style="margin-bottom: 20px; background: rgba(9,132,227,0.1); padding: 15px; border-radius: 10px; font-size: 0.85rem; color: #2d3436; line-height: 1.6;">
+                        <strong>Format File (.csv) - Wajib Ada Judul di Baris 1:</strong><br>
                         <code>Kolom A: Nama Lengkap</code><br>
                         <code>Kolom B: Username (tanpa spasi)</code><br>
                         <code>Kolom C: Password (min. 6 karakter)</code><br>
-                        <i style="color:var(--danger); margin-top:5px; display:block;">*Akun otomatis diset sebagai Guru di wilayah Anda.</i>
+                        <code>Kolom D: Tgl Bergabung (Format: YYYY-MM-DD)</code><br>
+                        <code>Kolom E: Role (Isi: <strong>guru</strong> atau <strong>admin_wilayah</strong>)</code><br>
+                        <code>Kolom F: Kode Wilayah (Cth: SBY-RAYA)</code><br>
+                        
+                        <i style="color:var(--danger); margin-top:8px; display:block;">*Catatan Keamanan: Jika Anda login sebagai Admin Wilayah, kolom Role & Wilayah akan diabaikan dan otomatis dikunci ke "guru" di wilayah Anda.</i>
                         
                         <button type="button" onclick="unduhTemplateCSV()" style="margin-top:12px; padding:8px 15px; background:#ffffff; color:#0984e3; border:1px solid #0984e3; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.85rem; transition:0.2s;">
                             <i class="fa-solid fa-download"></i> Unduh Contoh Format CSV
                         </button>
                     </div>
-                    <input type="file" id="fileCsvUsers" accept=".csv" style="margin-bottom:20px; width:100%; padding: 10px; border: 1px dashed #0984e3; border-radius: 10px;">
+                    <input type="file" id="fileCsvUsers" accept=".csv" style="margin-bottom:20px; width:100%; padding: 10px; border: 1px dashed #0984e3; border-radius: 10px; background: white;">
                     <button class="btn-submit" style="background:#0984e3;" id="btnMulaiImport" onclick="prosesImportCsv()">Mulai Import Massal</button>
                     <div id="importProgress" style="margin-top:15px; font-size:0.9rem; color:var(--primary-color); font-weight:bold; text-align:center;"></div>
                 </div>
@@ -533,6 +570,12 @@
                 <button class="btn-close-modal" onclick="tutupModalCabang()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="formCabang" onsubmit="simpanCabangFirebase(event)">
+                <div class="form-group">
+                    <label>Wilayah Penempatan Cabang</label>
+                    <select id="inputCabangWilayah" required style="width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #dfe6e9; outline: none;">
+                        <option value="" disabled selected>-- Memuat wilayah... --</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>ID Cabang</label>
                     <input type="text" id="inputCabangID" placeholder="Contoh: CAB-IKIP01" required style="text-transform: uppercase;">
@@ -574,6 +617,11 @@
                         <button class="btn-close-modal" onclick="tutupModalEditCabang()"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                     <form id="formEditCabang" onsubmit="simpanEditCabangFirebase(event)">
+                        <div class="form-group">
+                            <label>Wilayah Penempatan Cabang</label>
+                            <select id="editCabangWilayah" required style="width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #dfe6e9; outline: none;">
+                            </select>
+                        </div>
                         <div class="form-group">
                             <label>ID Cabang</label>
                             <input type="text" id="editCabangID" required readonly style="background:#f4f7f6; color:gray; font-weight:bold;">
@@ -953,15 +1001,27 @@
 
                     // LOGIKA PENYEMBUNYIAN MENU BERDASARKAN ROLE
                     if (role === 'super_admin') {
-                        document.getElementById('adminRole').innerText = 'Super Admin (Pusat)';
+                        document.getElementById('adminRole').innerText = `Admin Pusat`;
+                        document.getElementById('btnSwitchMode').style.display = 'block';
                         document.getElementById('menuWilayah').style.display = 'flex';
                         document.getElementById('menuUsers').style.display = 'flex';
+                        document.getElementById('menuCabang').style.display = 'flex'; 
+                        document.getElementById('menuJadwal').style.display = 'flex';
+                        document.getElementById('menuIzin').style.display = 'flex';
+                        document.getElementById('menuLaporan').style.display = 'flex';
                         
                         // Panggil data untuk Super Admin di sini
                         loadDataUsers(); 
+                        loadDataCabangWilayah();
+                        loadDataSesi();
+                        loadDataJadwal();
+                        loadDataIzinWilayah();
+                        isiDropdownFilterLaporan(); 
+                        loadDropdownsJadwal();
                     } 
                     else if (role === 'admin_wilayah') {
                         document.getElementById('adminRole').innerText = `Admin Wilayah: ${adminData.id_wilayah}`;
+                        document.getElementById('btnSwitchMode').style.display = 'block';
                         document.getElementById('menuCabang').style.display = 'flex';
                         document.getElementById('menuJadwal').style.display = 'flex';
                         document.getElementById('menuUsers').style.display = 'flex'; 
@@ -1058,6 +1118,7 @@
                 await setDoc(docRef, {
                     id_wilayah: kodeWilayah,
                     nama_wilayah: namaWilayah,
+                    status: 'aktif',
                     timestamp: serverTimestamp()
                 });
 
@@ -1087,23 +1148,102 @@
                 // Looping data dari database ke dalam baris tabel HTML
                 snapshot.forEach((doc) => {
                     const data = doc.data();
+                    
+                    const statusWilayah = data.status || 'aktif';
+                    const opacityRow = statusWilayah === 'aktif' ? '1' : '0.5';
+                    const teksStatus = statusWilayah === 'aktif' 
+                        ? '<span style="color:#27ae60; font-size:0.8rem;"><i class="fa-solid fa-circle-check"></i> Aktif</span>' 
+                        : '<span style="color:#d63031; font-size:0.8rem;"><i class="fa-solid fa-ban"></i> Non-aktif</span>';
+
+                    // Buat ID unik untuk tempat menampung angka cabang
+                    const idSpanCabang = `count-cabang-${data.id_wilayah}`;
+
                     const tr = document.createElement('tr');
+                    tr.style.opacity = opacityRow;
                     tr.innerHTML = `
-                        <td><strong>${data.id_wilayah}</strong></td>
+                        <td><strong>${data.id_wilayah}</strong> <br> ${teksStatus}</td>
                         <td>${data.nama_wilayah}</td>
-                        <td><span style="background:#eee; padding:2px 8px; border-radius:10px; font-size:0.8rem;">0 Cabang</span></td>
+                        
+                        <td><span id="${idSpanCabang}" style="background:#e3f2fd; color:var(--info); padding:4px 10px; border-radius:12px; font-size:0.85rem; font-weight:bold;"><i class="fa-solid fa-spinner fa-spin"></i> Menghitung...</span></td>
+                        
                         <td>
-                            <button style="border:none; background:none; color:var(--info); cursor:pointer; margin-right:10px;"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button style="border:none; background:none; color:var(--danger); cursor:pointer;" onclick="alert('Fitur hapus segera hadir!')"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="bukaModalEditWilayah('${data.id_wilayah}', '${data.nama_wilayah}')" style="border:none; background:none; color:var(--info); cursor:pointer; margin-right:10px;" title="Edit Wilayah"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="toggleStatusWilayah('${data.id_wilayah}', '${statusWilayah}', '${data.nama_wilayah}')" style="border:none; background:none; color:${statusWilayah === 'aktif' ? 'var(--danger)' : '#27ae60'}; cursor:pointer;" title="${statusWilayah === 'aktif' ? 'Non-aktifkan' : 'Aktifkan Kembali'}"><i class="fa-solid fa-power-off"></i></button>
                         </td>
                     `;
                     tabelWilayahBody.appendChild(tr);
+
+                    // --- MESIN PENGHITUNG OTOMATIS (ASYNC) ---
+                    // Sistem akan mencari berapa banyak cabang yang punya id_wilayah ini
+                    getDocs(query(collection(db, "cabang"), where("id_wilayah", "==", data.id_wilayah))).then(snap => {
+                        const spanEl = document.getElementById(idSpanCabang);
+                        if(spanEl) {
+                            if(snap.size > 0) {
+                                spanEl.innerHTML = `<i class="fa-solid fa-building"></i> ${snap.size} Cabang`;
+                            } else {
+                                spanEl.style.background = "#f4f7f6";
+                                spanEl.style.color = "gray";
+                                spanEl.innerHTML = "0 Cabang";
+                            }
+                        }
+                    }).catch(err => console.error("Gagal menghitung cabang:", err));
                 });
             });
         };
 
         // Panggil fungsi load saat halaman pertama kali dibuka
         loadDataWilayah();
+
+        // --- FUNGSI EDIT & TOGGLE STATUS WILAYAH ---
+        const modalEditWilayah = document.getElementById('modalEditWilayah');
+
+        window.bukaModalEditWilayah = (id, nama) => {
+            document.getElementById('editKodeWilayah').value = id;
+            document.getElementById('editNamaWilayah').value = nama;
+            modalEditWilayah.classList.add('active');
+        };
+
+        window.tutupModalEditWilayah = () => modalEditWilayah.classList.remove('active');
+
+        window.simpanEditWilayahFirebase = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSimpanEditWilayah');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; btn.disabled = true;
+
+            const idWilayah = document.getElementById('editKodeWilayah').value;
+            const namaBaru = document.getElementById('editNamaWilayah').value.trim();
+
+            try {
+                // Update dokumen di Firestore
+                await updateDoc(doc(db, "wilayah", idWilayah), {
+                    nama_wilayah: namaBaru
+                });
+                tutupModalEditWilayah();
+                alert("✅ Data nama wilayah berhasil diperbarui!");
+            } catch (error) {
+                console.error("Error edit wilayah:", error);
+                alert("❌ Gagal memperbarui wilayah.");
+            } finally {
+                btn.innerHTML = 'Update Wilayah'; btn.disabled = false;
+            }
+        };
+
+        window.toggleStatusWilayah = async (id, statusSaatIni, namaWilayah) => {
+            const statusBaru = statusSaatIni === 'aktif' ? 'nonaktif' : 'aktif';
+            const pesanKonfirmasi = statusSaatIni === 'aktif' 
+                ? `Yakin ingin MENON-AKTIFKAN wilayah ${namaWilayah}?\n\n(Data tidak dihapus, tapi disembunyikan dari sistem operasional).` 
+                : `Yakin ingin MENGAKTIFKAN KEMBALI wilayah ${namaWilayah}?`;
+
+            if (confirm(pesanKonfirmasi)) {
+                try {
+                    await updateDoc(doc(db, "wilayah", id), { status: statusBaru });
+                } catch (error) {
+                    console.error("Error toggle status wilayah:", error);
+                    alert("Gagal mengubah status wilayah.");
+                }
+            }
+        };
+        
         // ==========================================
         // MODUL MANAJEMEN PENGGUNA
         // ==========================================
@@ -1139,11 +1279,15 @@
         // 1. Mengisi Dropdown Wilayah otomatis dari Database Wilayah
         const loadDropdownWilayah = () => {
             onSnapshot(collection(db, "wilayah"), (snapshot) => {
-                let options = '<option value="" disabled selected>-- Pilih Wilayah Penugasan --</option>';
+                let options = '<option value="" disabled selected>-- Pilih Wilayah --</option>';
                 snapshot.forEach(doc => {
                     options += `<option value="${doc.data().id_wilayah}">${doc.data().nama_wilayah} (${doc.data().id_wilayah})</option>`;
                 });
-                dropdownWilayah.innerHTML = options;
+                
+                // Isi ke Modal User
+                if(document.getElementById('inputWilayahUser')) document.getElementById('inputWilayahUser').innerHTML = options;
+                // Isi ke Modal Cabang
+                if(document.getElementById('inputCabangWilayah')) document.getElementById('inputCabangWilayah').innerHTML = options;
             });
         };
         loadDropdownWilayah();
@@ -1449,10 +1593,17 @@
 
         window.bukaModalCabang = () => { 
             formCabang.reset(); 
-            document.getElementById('inputCabangLat').value = ''; 
-            document.getElementById('inputCabangLon').value = '';
-            if (marker) { map.removeLayer(marker); marker = null; }
+            
+            // --- LOGIKA KUNCI WILAYAH ---
+            if (window.adminData.role === 'admin_wilayah') {
+                const wilSelect = document.getElementById('inputCabangWilayah');
+                wilSelect.value = window.adminData.id_wilayah;
+                wilSelect.style.pointerEvents = 'none';
+                wilSelect.style.backgroundColor = '#f4f7f6';
+            }
+            // ----------------------------
 
+            document.getElementById('inputCabangLat').value = '';
             modalCabang.classList.add('active'); 
 
             setTimeout(() => {
@@ -1526,7 +1677,7 @@
                         lon: parseFloat(document.getElementById('inputCabangLon').value) 
                     },
                     radius: parseInt(document.getElementById('inputCabangRadius').value),
-                    id_wilayah: window.adminData.id_wilayah, // Otomatis terikat ke wilayah admin ini
+                    id_wilayah: document.getElementById('inputCabangWilayah').value,
                     timestamp: serverTimestamp()
                 });
                 tutupModalCabang();
@@ -1540,7 +1691,7 @@
 
         const loadDataCabangWilayah = () => {
             // FIREBASE QUERY: Cuma ambil cabang sesuai id_wilayah si Admin
-            const q = query(collection(db, "cabang"), where("id_wilayah", "==", window.adminData.id_wilayah));
+            const q = window.adminData.role === 'super_admin' ? collection(db, "cabang") : query(collection(db, "cabang"), where("id_wilayah", "==", window.adminData.id_wilayah));
             
             onSnapshot(q, (snapshot) => {
                 tabelCabangBody.innerHTML = '';
@@ -1621,7 +1772,7 @@
         };
 
         window.loadDataSesi = () => {
-            const qSesi = query(collection(db, "master_sesi"), where("id_wilayah", "==", window.adminData.id_wilayah));
+            const qSesi = window.adminData.role === 'super_admin' ? collection(db, "master_sesi") : query(collection(db, "master_sesi"), where("id_wilayah", "==", window.adminData.id_wilayah));
             onSnapshot(qSesi, (snapshot) => {
                 tabelSesiBody.innerHTML = '';
                 if (snapshot.empty) {
@@ -1662,23 +1813,41 @@
 
         // --- BAGIAN B: PLOTTING JADWAL ---
         window.loadDropdownsJadwal = () => {
-            // Dropdown Guru
-            onSnapshot(query(collection(db, "users"), where("role", "==", "guru"), where("id_wilayah", "==", window.adminData.id_wilayah)), (snapshot) => {
+            const role = window.adminData.role;
+            const idWilayah = window.adminData.id_wilayah;
+            
+            // 1. Dropdown Guru (God Mode vs Admin Wilayah)
+            const qGuru = role === 'super_admin' 
+                ? query(collection(db, "users"), where("role", "==", "guru")) 
+                : query(collection(db, "users"), where("role", "==", "guru"), where("id_wilayah", "==", idWilayah));
+                
+            onSnapshot(qGuru, (snapshot) => {
                 let options = '<option value="" disabled selected>-- Pilih Guru --</option>';
-                snapshot.forEach(doc => { options += `<option value="${doc.id}|${doc.data().nama}">${doc.data().nama}</option>`; });
+                snapshot.forEach(doc => { 
+                    options += `<option value="${doc.id}|${doc.data().nama}">${doc.data().nama} (${doc.data().id_wilayah || 'PUSAT'})</option>`; 
+                });
                 document.getElementById('inputJadwalGuru').innerHTML = options;
             });
-            // Dropdown Cabang
-            onSnapshot(query(collection(db, "cabang"), where("id_wilayah", "==", window.adminData.id_wilayah)), (snapshot) => {
+
+            // 2. Dropdown Cabang
+            const qCabang = role === 'super_admin' 
+                ? collection(db, "cabang") 
+                : query(collection(db, "cabang"), where("id_wilayah", "==", idWilayah));
+
+            onSnapshot(qCabang, (snapshot) => {
                 let options = '<option value="" disabled selected>-- Pilih Cabang --</option>';
                 snapshot.forEach(doc => { options += `<option value="${doc.data().id_cabang}|${doc.data().nama}">${doc.data().nama}</option>`; });
                 document.getElementById('inputJadwalCabang').innerHTML = options;
             });
-            // Dropdown Master Sesi
-            onSnapshot(query(collection(db, "master_sesi"), where("id_wilayah", "==", window.adminData.id_wilayah)), (snapshot) => {
+
+            // 3. Dropdown Master Sesi
+            const qSesi = role === 'super_admin' 
+                ? collection(db, "master_sesi") 
+                : query(collection(db, "master_sesi"), where("id_wilayah", "==", idWilayah));
+
+            onSnapshot(qSesi, (snapshot) => {
                 let options = '<option value="" disabled selected>-- Pilih Sesi Waktu --</option>';
                 snapshot.forEach(doc => { 
-                    // Kita sisipkan ARRAY HARI (digabung koma) ke dalam value dropdown
                     options += `<option value="${doc.id}|${doc.data().nama_sesi}|${doc.data().hari.join(',')}">${doc.data().nama_sesi} (${doc.data().jam_masuk}-${doc.data().jam_pulang})</option>`; 
                 });
                 document.getElementById('inputJadwalSesi').innerHTML = options;
@@ -1722,7 +1891,7 @@
         };
 
         window.loadDataJadwal = () => {
-            const qJadwal = query(collection(db, "jadwal"), where("id_wilayah", "==", window.adminData.id_wilayah));
+            const qJadwal = window.adminData.role === 'super_admin' ? collection(db, "jadwal") : query(collection(db, "jadwal"), where("id_wilayah", "==", window.adminData.id_wilayah));
             onSnapshot(qJadwal, (snapshot) => {
                 tabelJadwalBody.innerHTML = '';
                 if (snapshot.empty) {
@@ -1770,17 +1939,16 @@
 
         // Fungsi untuk menghasilkan dan mengunduh file template CSV otomatis
         window.unduhTemplateCSV = function() {
-            // Isi contoh data CSV (menggunakan \n untuk baris baru)
-            const isiCSV = "Ustaz Allam Abdullah,allam,123456\nUstazah Fulanah,fulanah,123456";
+            // Kita tambahkan HEADER (Baris Judul) agar gampang dibaca di Excel
+            const isiCSV = "Nama Lengkap,Username,Password,Tanggal Bergabung,Role,Kode Wilayah\nUstaz Allam Abdullah,allam,123456,2026-03-01,guru,SBY-RAYA\nAdmin Surabaya,adminsby,123456,2026-01-15,admin_wilayah,SBY-RAYA";
             
-            // Ubah menjadi format URI yang bisa didownload browser
             const encodedUri = encodeURI("data:text/csv;charset=utf-8," + isiCSV);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Template_Guru_Hafizh_Junior.csv");
-            document.body.appendChild(link); // Pasang link tak terlihat
-            link.click(); // Klik otomatis
-            document.body.removeChild(link); // Hapus link setelah sukses
+            link.setAttribute("download", "Template_Import_User_SiHaju.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         };
 
         // Pastikan memakai window. di depannya
@@ -1799,10 +1967,7 @@
             const progress = document.getElementById('importProgress');
             const btnImport = document.getElementById('btnMulaiImport');
             
-            if (!fileInput.files.length) { 
-                alert("Pilih file CSV terlebih dahulu!"); 
-                return; 
-            }
+            if (!fileInput.files.length) { alert("Pilih file CSV terlebih dahulu!"); return; }
 
             const file = fileInput.files[0];
             const reader = new FileReader();
@@ -1812,28 +1977,42 @@
 
             reader.onload = async function(e) {
                 const text = e.target.result;
-                // Deteksi baris baru (enter), baik format Windows (\r\n) maupun Mac/Linux (\n)
                 const rows = text.split(/\r?\n/); 
-                let sukses = 0;
-                let gagal = 0;
+                let sukses = 0; let gagal = 0;
 
-                // Loop setiap baris Excel
-                for (let i = 0; i < rows.length; i++) {
-                    // Hindari baris kosong
+                // MULAILAH DARI i = 1 (Karena baris ke-0 adalah Judul/Header Excel)
+                for (let i = 1; i < rows.length; i++) {
                     if (rows[i].trim() === '') continue; 
 
                     const cols = rows[i].split(',');
+                    // Syarat minimal 3 kolom (Nama, User, Pass) tetap ada, sisanya opsional
                     if (cols.length >= 3) {
-                        const nama = cols[0].trim();
-                        const username = cols[1].trim().toLowerCase();
-                        const pass = cols[2].trim();
+                        const nama = cols[0]?.trim();
+                        const username = cols[1]?.trim().toLowerCase();
+                        const pass = cols[2]?.trim();
+                        let tgl_gabung = cols[3]?.trim() || '';
+                        // Jika Excel memaksakan format DD/MM/YYYY (contoh: 09/03/2026)
+                        if (tgl_gabung.includes('/')) {
+                            const parts = tgl_gabung.split('/');
+                            if (parts.length === 3 && parts[2].length === 4) {
+                                // Putar urutannya menjadi YYYY-MM-DD (Standar Database Internasional)
+                                tgl_gabung = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                            }
+                        }
+                        // ------------------------------------------------------
+                        let role = cols[4]?.trim().toLowerCase() || 'guru';
+                        let id_wilayah = cols[5]?.trim().toUpperCase() || 'PUSAT';
+                        
                         const email = username + '@hj.com';
                         
-                        const role = 'guru';
-                        const id_wilayah = window.adminData.id_wilayah || 'PUSAT'; 
+                        // KEAMANAN LAPIS BAJA: Jika Admin Wilayah nekat memanipulasi CSV, paksa kembalikan ke otoritasnya!
+                        if (window.adminData.role === 'admin_wilayah') {
+                            role = 'guru';
+                            id_wilayah = window.adminData.id_wilayah;
+                        }
 
                         if (nama && username && pass.length >= 6) {
-                            progress.innerText = `Memproses: ${nama}... (${i+1}/${rows.length})`;
+                            progress.innerText = `Memproses: ${nama}... (${i}/${rows.length - 1})`;
                             try {
                                 const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
                                 await setDoc(doc(db, "users", userCred.user.uid), {
@@ -1842,20 +2021,22 @@
                                     email: email,
                                     role: role,
                                     id_wilayah: id_wilayah,
+                                    tgl_gabung: tgl_gabung,
+                                    status: 'aktif',
                                     timestamp: serverTimestamp()
                                 });
                                 sukses++;
                             } catch (err) {
-                                console.error(`Gagal baris ${i+1}:`, err);
-                                gagal++;
+                                console.error(`Gagal baris ${i}:`, err); gagal++;
                             }
+                        } else {
+                            gagal++;
                         }
                     } else {
-                        gagal++; // Jika kolom kurang dari 3
+                        gagal++; 
                     }
                 }
                 
-                // Selesai Looping
                 await signOut(secondaryAuth);
                 btnImport.disabled = false;
                 btnImport.innerHTML = 'Mulai Import Massal';
@@ -1870,7 +2051,7 @@
         window.loadDataIzinWilayah = () => {
             const tabelIzinBody = document.getElementById('tabelIzinBody');
             // Hanya tarik izin di wilayah admin ini
-            const qIzin = query(collection(db, "pengajuan_izin"), where("id_wilayah", "==", window.adminData.id_wilayah));
+            const qIzin = window.adminData.role === 'super_admin' ? collection(db, "pengajuan_izin") : query(collection(db, "pengajuan_izin"), where("id_wilayah", "==", window.adminData.id_wilayah));
             
             // Gunakan onSnapshot agar realtime! Begitu guru kirim, langsung muncul di layar Admin
             onSnapshot(qIzin, (snapshot) => {
@@ -1956,14 +2137,27 @@
             const cbCabang = document.getElementById('filterLapCabang');
             const cbGuru = document.getElementById('filterLapGuru');
             
+            const role = window.adminData.role;
+            const idWilayah = window.adminData.id_wilayah;
+
+            // Kueri Fleksibel
+            const qCabang = role === 'super_admin' 
+                ? collection(db, "cabang") 
+                : query(collection(db, "cabang"), where("id_wilayah", "==", idWilayah));
+                
+            const qGuru = role === 'super_admin' 
+                ? query(collection(db, "users"), where("role", "==", "guru")) 
+                : query(collection(db, "users"), where("role", "==", "guru"), where("id_wilayah", "==", idWilayah));
+
             // Tarik Cabang
-            getDocs(query(collection(db, "cabang"), where("id_wilayah", "==", window.adminData.id_wilayah))).then(snap => {
+            getDocs(qCabang).then(snap => {
                 let opts = '<option value="SEMUA">-- Semua Cabang --</option>';
                 snap.forEach(d => opts += `<option value="${d.data().nama}">${d.data().nama}</option>`);
                 cbCabang.innerHTML = opts;
             });
+            
             // Tarik Guru
-            getDocs(query(collection(db, "users"), where("role", "==", "guru"), where("id_wilayah", "==", window.adminData.id_wilayah))).then(snap => {
+            getDocs(qGuru).then(snap => {
                 let opts = '<option value="SEMUA">-- Semua Guru --</option>';
                 snap.forEach(d => opts += `<option value="${d.data().nama}">${d.data().nama}</option>`);
                 cbGuru.innerHTML = opts;
@@ -2171,6 +2365,7 @@
             document.getElementById('editCabangLat').value = lat;
             document.getElementById('editCabangLon').value = lon;
             document.getElementById('editCabangRadius').value = radius;
+            document.getElementById('editCabangWilayah').innerHTML = document.getElementById('inputCabangWilayah').innerHTML;
 
             modalEditCabang.classList.add('active');
 
@@ -2336,6 +2531,28 @@
                 console.error("Error edit jadwal:", error); alert("❌ Gagal memperbarui jadwal.");
             } finally {
                 btn.innerHTML = 'Update Plotting Jadwal'; btn.disabled = false;
+            }
+        };
+        window.kirimBroadcastPusat = async () => {
+            const judul = document.getElementById('inputJudulBroadcast').value;
+            const isi = document.getElementById('inputIsiBroadcast').value;
+            const statusBox = document.getElementById('statusBroadcast');
+            
+            if(!judul || !isi) {
+                statusBox.innerHTML = '<span style="color: red;">❌ Judul dan isi pesan tidak boleh kosong!</span>'; return;
+            }
+
+            statusBox.innerHTML = '<span style="color: #0984e3;"><i class="fa-solid fa-spinner fa-spin"></i> Mengirim pengumuman...</span>';
+
+            try {
+                await setDoc(doc(db, "pengumuman", "pusat"), {
+                    judul: judul, isi: isi, tanggal: serverTimestamp(), aktif: true
+                });
+                statusBox.innerHTML = '<span style="color: #27ae60;">✅ Pengumuman berhasil mengudara!</span>';
+                document.getElementById('inputJudulBroadcast').value = '';
+                document.getElementById('inputIsiBroadcast').value = '';
+            } catch (error) {
+                console.error(error); statusBox.innerHTML = '<span style="color: red;">❌ Gagal mengirim pengumuman.</span>';
             }
         };
     </script>
