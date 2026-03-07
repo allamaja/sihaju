@@ -409,6 +409,17 @@
                 <i class="fa-solid fa-chevron-right" style="color: #cbd5e1;"></i>
             </button>
 
+            <button id="btnSwitchAdmin" class="btn-menu-profil" onclick="window.location.href='admin.html'" style="display: none;">
+                <div style="display: flex; align-items: center;">
+                    <div class="icon-left" style="background: var(--info);"><i class="fa-solid fa-gauge-high"></i></div>
+                    <div>
+                        <strong style="color: var(--text-dark); display: block; font-size: 1rem;">Dashboard Admin</strong>
+                        <span style="color: gray; font-size: 0.75rem;">Kembali ke halaman pengelola wilayah</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: #cbd5e1;"></i>
+            </button>
+
             <button onclick="logoutFirebase()" class="btn-menu-profil" style="margin-top: 30px; border: 1.5px solid var(--danger); box-shadow: none;">
                 <div style="display: flex; align-items: center;">
                     <div class="icon-left" style="background: #fff3f3; color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i></div>
@@ -600,30 +611,47 @@
             const docRef = doc(db, "users", user.uid);
             const docSnap = await getDoc(docRef);
 
-            if (docSnap.exists() && docSnap.data().role === 'guru') {
-                window.currentUser = docSnap.data();
-                
-                // Update UI Profil Dasar
-                document.getElementById('teksSapaan').innerText = `Assalamu'alaikum, ${window.currentUser.nama}`;
-                
-                window.cekKelengkapanProfil(window.currentUser);
-                
-                // BUKA GEMBOK LOADING
-                document.getElementById('loadingOverlay').style.display = 'none';
+            if (docSnap.exists()) {
+                const dataUser = docSnap.data();
+                const role = dataUser.role;
 
-                // JALANKAN MESIN PENCARI JADWAL!
-                await muatJadwalDanCabang(user.uid);
-                
-                // JALANKAN MESIN RIWAYAT!
-                await muatRingkasanDanRiwayat(user.uid); 
+                // --- IZINKAN 3 ROLE INI MASUK ---
+                if (role === 'guru' || role === 'admin_wilayah' || role === 'super_admin') {
+                    window.currentUser = dataUser;
+                    
+                    // Update UI Profil Dasar
+                    document.getElementById('teksSapaan').innerText = `Assalamu'alaikum, ${window.currentUser.nama}`;
+                    
+                    // --- FITUR GANTI TOPI (Khusus Admin) ---
+                    // Munculkan tombol kembali ke Dashboard Admin jika yang masuk adalah Admin
+                    if (role === 'admin_wilayah' || role === 'super_admin') {
+                        const btnSwitchAdmin = document.getElementById('btnSwitchAdmin');
+                        if(btnSwitchAdmin) btnSwitchAdmin.style.display = 'flex';
+                    }
+                    // ---------------------------------------
 
-                window.loadDataPengajuan();
+                    window.cekKelengkapanProfil(window.currentUser);
+                    
+                    // BUKA GEMBOK LOADING
+                    document.getElementById('loadingOverlay').style.display = 'none';
 
+                    // JALANKAN MESIN PENCARI JADWAL!
+                    await muatJadwalDanCabang(user.uid);
+                    
+                    // JALANKAN MESIN RIWAYAT!
+                    await muatRingkasanDanRiwayat(user.uid); 
+
+                    window.loadDataPengajuan();
+
+                } else {
+                    alert("Akses Ditolak: Anda tidak memiliki izin untuk halaman ini.");
+                    signOut(auth).then(() => {
+                        window.location.href = 'login.html'; // TENDANG KE LOGIN
+                    });
+                }
             } else {
-                alert("Akses Ditolak: Akun ini bukan Guru.");
-                signOut(auth).then(() => {
-                    window.location.href = 'login.html'; // TENDANG KE LOGIN
-                });
+                // Jika data dokumen tidak ditemukan
+                signOut(auth).then(() => { window.location.href = 'login.html'; });
             }
         } else {
             // JIKA BELUM LOGIN, TENDANG KE LOGIN
