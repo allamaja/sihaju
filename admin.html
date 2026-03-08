@@ -534,9 +534,31 @@
                             <i class="fa-solid fa-download"></i> Unduh Contoh Format CSV
                         </button>
                     </div>
-                    <input type="file" id="fileCsvUsers" accept=".csv" style="margin-bottom:20px; width:100%; padding: 10px; border: 1px dashed #0984e3; border-radius: 10px; background: white;">
-                    <button class="btn-submit" style="background:#0984e3;" id="btnMulaiImport" onclick="prosesImportCsv()">Mulai Import Massal</button>
-                    <div id="importProgress" style="margin-top:15px; font-size:0.9rem; color:var(--primary-color); font-weight:bold; text-align:center;"></div>
+                    <input type="file" id="fileCsvUsers" accept=".csv" style="margin-bottom:15px; width:100%; padding: 10px; border: 1px dashed #0984e3; border-radius: 10px; background: white;">
+                    
+                    <div id="previewContainer" style="display:none; max-height: 200px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #dfe6e9; border-radius: 8px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                            <thead style="background: #f4f7f6; position: sticky; top: 0;">
+                                <tr>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dfe6e9;">Nama Lengkap</th>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dfe6e9;">Username</th>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dfe6e9;">Tanggal</th>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dfe6e9;">Role</th>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dfe6e9;">Wilayah</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #dfe6e9;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelPreviewCSV">
+                                </tbody>
+                        </table>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-submit" style="background:#f39c12; flex: 1;" id="btnPreviewImport" onclick="previewCsvUsers()"><i class="fa-solid fa-eye"></i> 1. Tampilkan Data</button>
+                        <button class="btn-submit" style="background:#0984e3; flex: 1; display: none;" id="btnMulaiImport" onclick="konfirmasiImportCsv()"><i class="fa-solid fa-cloud-arrow-up"></i> 2. Konfirmasi & Import</button>
+                    </div>
+                    
+                    <div id="importProgress" style="margin-top:15px; font-size:0.9rem; font-weight:bold; text-align:center;"></div>
                 </div>
             </div>
 
@@ -1018,6 +1040,7 @@
                         loadDataIzinWilayah();
                         isiDropdownFilterLaporan(); 
                         loadDropdownsJadwal();
+                        loadDataWilayah();
                     } 
                     else if (role === 'admin_wilayah') {
                         document.getElementById('adminRole').innerText = `Admin Wilayah: ${adminData.id_wilayah}`;
@@ -1036,6 +1059,7 @@
                         loadDataUsers(); 
                         loadDataIzinWilayah();
                         isiDropdownFilterLaporan();
+                        loadDataWilayah();
                     } 
                     else {
                         alert("AKSES DITOLAK: Anda adalah Guru.");
@@ -1133,12 +1157,23 @@
             }
         };
 
-        // Fungsi Membaca Data secara Real-time (Otomatis tampil di tabel)
         // Fungsi ini akan terus memantau koleksi "wilayah". Kalau ada data baru, tabel otomatis berubah!
+        // Fungsi Membaca Data secara Real-time (Otomatis tampil di tabel)
         const loadDataWilayah = () => {
             const wilayahCol = collection(db, "wilayah");
             onSnapshot(wilayahCol, (snapshot) => {
                 tabelWilayahBody.innerHTML = ''; // Kosongkan tabel dulu
+
+                // --- LOGIKA DASHBOARD COUNTER WILAYAH ---
+                const dashWilayah = document.getElementById('dashCountWilayah');
+                if(dashWilayah) {
+                    if(window.adminData && window.adminData.role === 'super_admin') {
+                        dashWilayah.innerText = snapshot.size; // Pusat: Hitung semua wilayah
+                    } else {
+                        dashWilayah.innerText = "1"; // Admin Wilayah: Pasti cuma pegang 1 wilayah
+                    }
+                }
+                // ----------------------------------------
 
                 if (snapshot.empty) {
                     tabelWilayahBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: gray;">Belum ada data wilayah.</td></tr>';
@@ -1173,8 +1208,7 @@
                     `;
                     tabelWilayahBody.appendChild(tr);
 
-                    // --- MESIN PENGHITUNG OTOMATIS (ASYNC) ---
-                    // Sistem akan mencari berapa banyak cabang yang punya id_wilayah ini
+                    // --- MESIN PENGHITUNG CABANG OTOMATIS (ASYNC) ---
                     getDocs(query(collection(db, "cabang"), where("id_wilayah", "==", data.id_wilayah))).then(snap => {
                         const spanEl = document.getElementById(idSpanCabang);
                         if(spanEl) {
@@ -1958,92 +1992,162 @@
             modalImport.classList.add('active'); 
         };
 
-        window.tutupModalImport = function() { 
-            modalImport.classList.remove('active'); 
+        window.tutupModalImport = () => {
+            document.getElementById('modalImport').classList.remove('active');
+            
+            // --- BARIS RESET PREVIEW (Tambahkan ini) ---
+            document.getElementById('previewContainer').style.display = 'none';
+            document.getElementById('btnMulaiImport').style.display = 'none';
+            document.getElementById('btnPreviewImport').style.display = 'block';
+            document.getElementById('importProgress').innerHTML = '';
+            document.getElementById('fileCsvUsers').value = '';
+            window.dataCsvSiapImport = [];
+            // ------------------------------------------
         };
 
-        window.prosesImportCsv = function() {
+        // 1. Variabel penampung data
+        window.dataCsvSiapImport = [];
+
+        // 2. Fungsi Membaca CSV dan Memasukkan ke Variabel
+        window.previewCsvUsers = function() {
             const fileInput = document.getElementById('fileCsvUsers');
-            const progress = document.getElementById('importProgress');
-            const btnImport = document.getElementById('btnMulaiImport');
-            
             if (!fileInput.files.length) { alert("Pilih file CSV terlebih dahulu!"); return; }
 
             const file = fileInput.files[0];
             const reader = new FileReader();
 
-            btnImport.disabled = true;
-            btnImport.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sedang Membaca...';
-
-            reader.onload = async function(e) {
+            reader.onload = function(e) {
                 const text = e.target.result;
-                const rows = text.split(/\r?\n/); 
-                let sukses = 0; let gagal = 0;
+                const rows = text.split(/\r?\n/);
+                window.dataCsvSiapImport = []; // Kosongkan keranjang
 
-                // MULAILAH DARI i = 1 (Karena baris ke-0 adalah Judul/Header Excel)
                 for (let i = 1; i < rows.length; i++) {
                     if (rows[i].trim() === '') continue; 
 
                     const cols = rows[i].split(',');
-                    // Syarat minimal 3 kolom (Nama, User, Pass) tetap ada, sisanya opsional
                     if (cols.length >= 3) {
                         const nama = cols[0]?.trim();
                         const username = cols[1]?.trim().toLowerCase();
                         const pass = cols[2]?.trim();
                         let tgl_gabung = cols[3]?.trim() || '';
-                        // Jika Excel memaksakan format DD/MM/YYYY (contoh: 09/03/2026)
+                        let role = cols[4]?.trim().toLowerCase() || 'guru';
+                        let id_wilayah = cols[5]?.trim().toUpperCase() || 'PUSAT';
+
+                        // Obat Tanggal
                         if (tgl_gabung.includes('/')) {
                             const parts = tgl_gabung.split('/');
                             if (parts.length === 3 && parts[2].length === 4) {
-                                // Putar urutannya menjadi YYYY-MM-DD (Standar Database Internasional)
                                 tgl_gabung = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
                             }
                         }
-                        // ------------------------------------------------------
-                        let role = cols[4]?.trim().toLowerCase() || 'guru';
-                        let id_wilayah = cols[5]?.trim().toUpperCase() || 'PUSAT';
-                        
-                        const email = username + '@hj.com';
-                        
-                        // KEAMANAN LAPIS BAJA: Jika Admin Wilayah nekat memanipulasi CSV, paksa kembalikan ke otoritasnya!
+
+                        // Proteksi Otoritas
                         if (window.adminData.role === 'admin_wilayah') {
-                            role = 'guru';
-                            id_wilayah = window.adminData.id_wilayah;
+                            role = 'guru'; id_wilayah = window.adminData.id_wilayah;
                         }
 
                         if (nama && username && pass.length >= 6) {
-                            progress.innerText = `Memproses: ${nama}... (${i}/${rows.length - 1})`;
-                            try {
-                                const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
-                                await setDoc(doc(db, "users", userCred.user.uid), {
-                                    uid: userCred.user.uid,
-                                    nama: nama,
-                                    email: email,
-                                    role: role,
-                                    id_wilayah: id_wilayah,
-                                    tgl_gabung: tgl_gabung,
-                                    status: 'aktif',
-                                    timestamp: serverTimestamp()
-                                });
-                                sukses++;
-                            } catch (err) {
-                                console.error(`Gagal baris ${i}:`, err); gagal++;
-                            }
-                        } else {
-                            gagal++;
+                            const email = username + '@hj.com';
+                            window.dataCsvSiapImport.push({nama, username, email, pass, tgl_gabung, role, id_wilayah});
                         }
-                    } else {
-                        gagal++; 
                     }
                 }
-                
-                await signOut(secondaryAuth);
-                btnImport.disabled = false;
-                btnImport.innerHTML = 'Mulai Import Massal';
-                progress.innerHTML = `<span style="color:#27ae60;">Selesai! Berhasil: ${sukses} akun | Gagal/Dilewati: ${gagal} baris.</span>`;
-            };
 
+                if(window.dataCsvSiapImport.length > 0) {
+                    renderTabelPreview(); // Panggil fungsi pembuat tabel
+                } else {
+                    alert("Tidak ada data valid yang ditemukan! Periksa kembali format CSV-nya.");
+                }
+            };
             reader.readAsText(file);
+        };
+
+        // 3. Fungsi Membuat Tampilan Tabel (Bisa dipanggil ulang saat baris dihapus)
+        window.renderTabelPreview = function() {
+            let htmlTable = '';
+            
+            window.dataCsvSiapImport.forEach((data, index) => {
+                htmlTable += `<tr id="baris-csv-${index}">
+                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">${data.nama}</td>
+                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">${data.username}</td>
+                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">${data.tgl_gabung}</td>
+                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">
+                        <span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:0.7rem;">${data.role}</span>
+                    </td>
+                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee;"><strong>${data.id_wilayah}</strong></td>
+                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee; text-align: center;">
+                        <button onclick="hapusBarisPreview(${index})" style="background: none; border: none; color: #d63031; cursor: pointer; padding: 5px;" title="Hapus Baris ini"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+
+            if (window.dataCsvSiapImport.length > 0) {
+                document.getElementById('tabelPreviewCSV').innerHTML = htmlTable;
+                document.getElementById('previewContainer').style.display = 'block';
+                document.getElementById('btnMulaiImport').style.display = 'block';
+                document.getElementById('btnPreviewImport').style.display = 'none';
+                document.getElementById('importProgress').innerHTML = `<span style="color:#d35400;"><i class="fa-solid fa-circle-exclamation"></i> Terdapat ${window.dataCsvSiapImport.length} data siap import. Hapus baris yang salah sebelum konfirmasi.</span>`;
+            } else {
+                document.getElementById('previewContainer').style.display = 'none';
+                document.getElementById('btnMulaiImport').style.display = 'none';
+                document.getElementById('btnPreviewImport').style.display = 'block';
+                document.getElementById('importProgress').innerHTML = `<span style="color:#d63031;">Semua data telah dihapus. Silakan upload ulang file CSV.</span>`;
+            }
+        };
+
+        // 4. Fungsi Hapus Baris
+        window.hapusBarisPreview = function(index) {
+            // Hapus 1 data dari memori berdasarkan nomor urutnya
+            window.dataCsvSiapImport.splice(index, 1);
+            // Render ulang tabelnya agar nomor urut kembali rapi
+            renderTabelPreview();
+        };
+
+        // TAHAP 2: KIRIM KE FIREBASE
+        window.konfirmasiImportCsv = async function() {
+            const btnImport = document.getElementById('btnMulaiImport');
+            const progress = document.getElementById('importProgress');
+            
+            btnImport.disabled = true;
+            btnImport.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sedang Mengimport...';
+
+            let sukses = 0; let gagal = 0;
+            const totalData = window.dataCsvSiapImport.length;
+
+            for (let i = 0; i < totalData; i++) {
+                const data = window.dataCsvSiapImport[i];
+                progress.innerHTML = `<span style="color:#0984e3;"><i class="fa-solid fa-cloud-arrow-up"></i> Memproses: ${data.nama}... (${i+1}/${totalData})</span>`;
+                
+                try {
+                    const userCred = await createUserWithEmailAndPassword(secondaryAuth, data.email, data.pass);
+                    await setDoc(doc(db, "users", userCred.user.uid), {
+                        uid: userCred.user.uid,
+                        nama: data.nama,
+                        email: data.email,
+                        role: data.role,
+                        id_wilayah: data.id_wilayah,
+                        tgl_gabung: data.tgl_gabung,
+                        status: 'aktif',
+                        timestamp: serverTimestamp()
+                    });
+                    sukses++;
+                } catch (err) {
+                    console.error(`Gagal import ${data.nama}:`, err); gagal++;
+                }
+            }
+
+            await signOut(secondaryAuth);
+            
+            // Kembalikan tombol ke keadaan semula
+            btnImport.disabled = false;
+            btnImport.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 2. Konfirmasi & Import';
+            btnImport.style.display = 'none';
+            document.getElementById('btnPreviewImport').style.display = 'block';
+            document.getElementById('previewContainer').style.display = 'none';
+            
+            progress.innerHTML = `<span style="color:#27ae60;"><i class="fa-solid fa-check-circle"></i> Selesai! Berhasil: ${sukses} akun | Gagal/Duplikat: ${gagal} akun.</span>`;
+            
+            window.dataCsvSiapImport = []; // Kosongkan memori kembali
         };
         // ==========================================
         // MODUL 6: PERSETUJUAN IZIN (ADMIN WILAYAH)
