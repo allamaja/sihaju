@@ -731,6 +731,28 @@
         return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
+    // --- MESIN KEDISIPLINAN WAKTU HAFIZH JUNIOR ---
+    window.tentukanStatusWaktu = function(jamMasukKBM) {
+        const sekarang = new Date();
+        const totalMenitSekarang = (sekarang.getHours() * 60) + sekarang.getMinutes();
+
+        const [jamSesi, menitSesi] = jamMasukKBM.split(':').map(Number);
+        const totalMenitSesi = (jamSesi * 60) + menitSesi; 
+
+        const bukaAbsen = totalMenitSesi - 30;  // 30 menit sebelum KBM
+        const batasTelat = totalMenitSesi + 15; // Toleransi 15 menit setelah KBM
+
+        if (totalMenitSekarang < bukaAbsen) {
+            return "BELUM BUKA";
+        } else if (totalMenitSekarang >= bukaAbsen && totalMenitSekarang <= totalMenitSesi) {
+            return "Hadir";
+        } else if (totalMenitSekarang > totalMenitSesi && totalMenitSekarang <= batasTelat) {
+            return "Terlambat";
+        } else {
+            return "TERKUNCI";
+        }
+    };
+
     // --- 5. EKSEKUSI ABSEN DENGAN DATA DINAMIS ---
     window.submitAbsenFirebase = function() {
         const guru = window.currentUser;
@@ -754,6 +776,20 @@
         if (!window.jadwalHariIni || !window.cabangHariIni || !window.sesiHariIni) {
             alert("Data jadwal atau cabang belum lengkap dimuat!"); return;
         }
+
+        // --- PENGECEKAN KEDISIPLINAN WAKTU (BARU) ---
+        const jamKBM = window.sesiHariIni.jam_masuk; // Tarik jam dari relasi sesi
+        const statusKedisiplinan = window.tentukanStatusWaktu(jamKBM);
+
+        if (statusKedisiplinan === "BELUM BUKA") {
+            alert(`Sabar ya! Absensi baru dibuka 30 menit sebelum sesi KBM (${jamKBM}) dimulai.`);
+            return; // Berhenti
+        } 
+        else if (statusKedisiplinan === "TERKUNCI") {
+            alert(`AKSES DITOLAK: Anda terlambat lebih dari 15 menit dari jadwal KBM (${jamKBM}).\n\nJika Anda hadir namun lupa absen, silakan melapor ke Admin Wilayah untuk input manual.`);
+            return; // Berhenti
+        }
+        // --------------------------------------------
 
         btn.innerHTML = '<i class="fa-solid fa-satellite-dish fa-beat"></i> Mengecek GPS...';
         btn.disabled = true;
@@ -786,7 +822,7 @@
                         id_jadwal: window.jadwalHariIni.id_jadwal,
                         cabang_absen: window.cabangHariIni.nama,
                         sesi_absen: window.sesiHariIni.nama_sesi,
-                        status: "Hadir",
+                        status: statusKedisiplinan,
                         koordinat: { lat: latUser, lon: lonUser },
                         jarak_meter: Math.round(jarak),
                         timestamp: serverTimestamp()
