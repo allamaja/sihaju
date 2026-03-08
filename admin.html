@@ -266,7 +266,7 @@
             </div>
             <div class="nav-item" id="menuLaporan" onclick="switchPanel('panel-laporan', this)">
                 <i class="fa-solid fa-file-excel"></i> Laporan Absensi
-            </div>            
+            </div>
         </nav>
     </aside>
 
@@ -908,9 +908,14 @@
                         <h2 style="color: var(--text-dark);"><i class="fa-solid fa-file-excel" style="color: #27ae60;"></i> Laporan & Rekap Payroll</h2>
                         <p style="font-size:0.85rem; color:var(--text-muted);">Tarik data kehadiran mentah dan rekapitulasi gaji per cabang.</p>
                     </div>
-                    <button class="btn-tambah" style="background-color: #27ae60; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);" id="btnUnduhExcel" onclick="unduhLaporanExcel()">
-                        <i class="fa-solid fa-download"></i> Unduh Excel (2 Sheet)
-                    </button>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+                        <button class="btn-tambah" style="background-color: #0984e3; box-shadow: 0 4px 15px rgba(9, 132, 227, 0.3);" onclick="bukaModalAbsenManual()">
+                            <i class="fa-solid fa-pen-to-square"></i> Input Manual
+                        </button>
+                        <button class="btn-tambah" style="background-color: #27ae60; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);" id="btnUnduhExcel" onclick="unduhLaporanExcel()">
+                            <i class="fa-solid fa-download"></i> Unduh Excel (2 Sheet)
+                        </button>
+                    </div>
                 </div>
 
                 <div style="background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
@@ -982,13 +987,50 @@
                 </div>
             </div>
 
+            
+
         </div>
     </main>
+    <div id="modalAbsenManual" class="modal-overlay">
+        <div class="modal-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: var(--text-dark);"><i class="fa-solid fa-pen-to-square" style="color: #0984e3;"></i> Input Absen Manual</h3>
+                <button onclick="tutupModalAbsenManual()" style="background: none; border: none; font-size: 1.5rem; color: gray; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="formAbsenManual" onsubmit="simpanAbsenManualFirebase(event)">
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Pilih Guru</label>
+                    <select id="inputManualGuru" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; background: white;"></select>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Pilih Lokasi Cabang</label>
+                    <select id="inputManualCabang" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; background: white;"></select>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Pilih Sesi</label>
+                    <select id="inputManualSesi" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; background: white;"></select>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Tentukan Waktu Kehadiran</label>
+                    <input type="datetime-local" id="inputManualWaktu" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
+                    <small style="color: var(--info); font-size: 0.75rem;"><i class="fa-solid fa-circle-info"></i> Bisa diubah mundur (backdate) jika guru telat lapor.</small>
+                </div>
+
+                <button type="submit" id="btnSimpanManual" style="width: 100%; padding: 15px; background: #0984e3; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Kehadiran Manual
+                </button>
+            </form>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, collection, doc, getDoc, setDoc, getDocs, query, where, serverTimestamp, onSnapshot, updateDoc, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, getDocs, query, where, serverTimestamp, onSnapshot, updateDoc, limit, deleteDoc, addDoc} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDN_okDhvmPQQ2mAoZqGnrwZ0C7lL6YQDU",
@@ -2307,7 +2349,7 @@
                 const snapshot = await getDocs(qAbsen);
 
                 let rawData = [];
-                snapshot.forEach(doc => rawData.push(doc.data()));
+                snapshot.forEach(doc => rawData.push({ id_dokumen: doc.id, ...doc.data() }));
 
                 // JAVASCRIPT FILTERING CANGGIH: Saring Cabang & Nama Guru di memori browser (Lebih hemat & cepat)
                 window.dataLaporanMentah = rawData.filter(d => {
@@ -2327,10 +2369,28 @@
                         rekapObj[key] = { cabang: d.cabang_absen, guru: d.nama_guru, hadir: 0, telat: 0, badal: 0, izin: 0 };
                     }
                     
-                    if(d.status.includes("Hadir (Badal)")) rekapObj[key].badal++;
-                    else if(d.status.includes("Terlambat")) rekapObj[key].telat++;
-                    else if(d.status.includes("Hadir")) rekapObj[key].hadir++;
-                    else rekapObj[key].izin++; // Jika ada status Izin/Cuti masuk ke absen
+                    // --- MESIN PENGHITUNG GAJI SUPER KETAT ---
+                    if (d.status.includes("Hadir (Kegiatan)")) {
+                        // 1. KEGIATAN EKSTRA: Diabaikan dari total kehadiran gaji mengajar reguler
+                        // (Tetap muncul di sheet detail, tapi tidak menambah saldo honor)
+                        return; 
+                    } 
+                    else if (d.status.includes("Hadir (Badal)")) {
+                        // 2. BADAL: Masuk keranjang Badal
+                        rekapObj[key].badal++;
+                    } 
+                    else if (d.status.includes("Terlambat") || d.status.includes("Manual Admin")) {
+                        // 3. TERLAMBAT & LUPA ABSEN: Otomatis masuk keranjang Telat! (Hukuman kedisiplinan)
+                        rekapObj[key].telat++;
+                    } 
+                    else if (d.status === "Hadir") {
+                        // 4. HADIR SEMPURNA: Hanya untuk yang klik absen sendiri dan tepat waktu
+                        rekapObj[key].hadir++;
+                    } 
+                    else {
+                        // 5. SISANYA: Izin, Sakit, Alfa
+                        rekapObj[key].izin++; 
+                    }
                 });
 
                 // Ubah Object hasil pivot menjadi Array siap pakai
@@ -2365,7 +2425,14 @@
                     <td><strong>${formatWaktu}</strong></td>
                     <td><strong>${data.nama_guru}</strong> <br> <small style="color:gray;">${data.guru_digantikan ? '(Ganti: ' + data.guru_digantikan + ')' : 'Reguler'}</small></td>
                     <td><i class="fa-solid fa-location-dot" style="color:var(--danger);"></i> ${data.cabang_absen} <br> <small>Sesi: ${data.sesi_absen}</small></td>
-                    <td><span style="color:${warnaStatus}; font-weight:bold;">${data.status}</span></td>
+                    <td>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color:${warnaStatus}; font-weight:bold;">${data.status}</span>
+                            <button onclick="hapusSpamAbsen('${data.id_dokumen}', '${data.nama_guru}')" style="background: none; border: none; color: #d63031; cursor: pointer; padding: 5px;" title="Hapus Data Ini (Spam)">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -2657,6 +2724,77 @@
                 document.getElementById('inputIsiBroadcast').value = '';
             } catch (error) {
                 console.error(error); statusBox.innerHTML = '<span style="color: red;">❌ Gagal mengirim pengumuman.</span>';
+            }
+        };
+        // FUNGSI HAPUS SPAM ABSEN OLEH ADMIN
+        window.hapusSpamAbsen = async (idDokumen, namaGuru) => {
+            if(confirm(`Yakin ingin MENGHAPUS data absensi milik ${namaGuru} ini secara permanen? (Biasanya untuk hapus spam/double)`)) {
+                try {
+                    await deleteDoc(doc(db, "absensi", idDokumen));
+                    alert("✅ Data spam berhasil dihapus! Silakan klik 'Tarik Data' lagi untuk menyegarkan tabel.");
+                } catch (error) {
+                    console.error("Gagal hapus:", error); alert("❌ Gagal menghapus data.");
+                }
+            }
+        };
+        // ==========================================
+        // FUNGSI INPUT ABSEN MANUAL (VERSI DROPDOWN ANTI TYPO)
+        // ==========================================
+        window.bukaModalAbsenManual = () => {
+            document.getElementById('formAbsenManual').reset();
+            
+            // SIHIR KECIL: Kita "copy-paste" isi dropdown dari menu Plotting Jadwal 
+            // agar tidak perlu menarik ulang data dari Firebase! Lebih hemat kuota!
+            document.getElementById('inputManualGuru').innerHTML = document.getElementById('inputJadwalGuru').innerHTML;
+            document.getElementById('inputManualCabang').innerHTML = document.getElementById('inputJadwalCabang').innerHTML;
+            document.getElementById('inputManualSesi').innerHTML = document.getElementById('inputJadwalSesi').innerHTML;
+
+            // Atur default waktu ke detik ini
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // Sesuaikan Zona Waktu WIB
+            document.getElementById('inputManualWaktu').value = now.toISOString().slice(0,16);
+
+            document.getElementById('modalAbsenManual').classList.add('active');
+        };
+
+        window.tutupModalAbsenManual = () => {
+            document.getElementById('modalAbsenManual').classList.remove('active');
+        };
+
+        window.simpanAbsenManualFirebase = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSimpanManual');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+            btn.disabled = true;
+
+            try {
+                // Pecah data dari dropdown (Format sebelumnya: ID|Nama)
+                const guruData = document.getElementById('inputManualGuru').value.split('|');
+                const cabangData = document.getElementById('inputManualCabang').value.split('|');
+                const sesiData = document.getElementById('inputManualSesi').value.split('|');
+                
+                // Ambil tanggal & jam dari input kalender
+                const waktuInput = new Date(document.getElementById('inputManualWaktu').value);
+
+                await addDoc(collection(db, "absensi"), {
+                    uid_guru: guruData[0],
+                    nama_guru: guruData[1],
+                    cabang_absen: cabangData[1],
+                    sesi_absen: sesiData[1],
+                    status: "Hadir (Manual Admin)", // Status Spesial
+                    koordinat: { lat: 0, lon: 0 },
+                    jarak_meter: 0,
+                    timestamp: waktuInput // Kita simpan sesuai waktu yang diinput Admin!
+                });
+
+                alert(`✅ Berhasil! Absen manual untuk ${guruData[1]} sudah terekam di sistem.`);
+                tutupModalAbsenManual();
+                
+            } catch (error) {
+                console.error(error); alert("❌ Gagal menginput absen manual.");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Kehadiran Manual';
+                btn.disabled = false;
             }
         };
     </script>
