@@ -245,6 +245,10 @@
                 <button class="btn-badal" onclick="bukaModalBadal()">
                     <i class="fa-solid fa-users-arrows-relational"></i> Absen Badal (Guru Pengganti)
                 </button>
+
+                <button onclick="bukaModalKegiatan()" style="width: 100%; padding: 14px; background: rgba(9, 132, 227, 0.08); color: var(--info); border: 1.5px solid rgba(9, 132, 227, 0.3); border-radius: 12px; font-weight: bold; font-size: 0.95rem; cursor: pointer; margin-top: 15px; transition: all 0.3s ease; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                <i class="fa-solid fa-users-rectangle" style="font-size: 1.1rem;"></i> Absen Kegiatan Ekstra
+            </button>
                 
             </div>
 
@@ -558,6 +562,33 @@
         </div>
     </div>
 
+    <div id="modalKegiatan" class="modal-overlay">
+        <div class="modal-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: var(--text-dark);"><i class="fa-solid fa-users-rectangle" style="color: #0984e3;"></i> Absen Kegiatan</h3>
+                <button onclick="tutupModalKegiatan()" style="background: none; border: none; font-size: 1.5rem; color: gray; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form id="formKegiatan" onsubmit="submitAbsenKegiatanFirebase(event)">
+                <div style="margin-bottom: 15px;">
+                    <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Nama / Jenis Kegiatan</label>
+                    <input type="text" id="inputNamaKegiatan" placeholder="Contoh: Rapat Bulanan, Pelatihan..." required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Lokasi Kegiatan</label>
+                    <select id="inputLokasiKegiatan" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; background: white;">
+                        <option value="" disabled selected>Memuat data cabang...</option>
+                    </select>
+                </div>
+                
+                <button type="submit" id="btnSubmitKegiatan" style="width: 100%; padding: 15px; background: #0984e3; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">
+                    <i class="fa-solid fa-location-dot"></i> Validasi GPS & Absen Hadir
+                </button>
+            </form>
+        </div>
+    </div>
+
 <script>
     function startClock() {
         const clockEl = document.getElementById('liveClock');
@@ -702,9 +733,40 @@
         teksSesi.innerHTML = `<i class="fa-solid fa-clock"></i> ${window.sesiHariIni.nama_sesi} (${window.sesiHariIni.jam_masuk})`;
         teksRadius.innerText = `Target GPS: Radius ${window.cabangHariIni.radius} meter`;
         
-        btnAbsen.innerHTML = `<i class="fa-solid fa-fingerprint"></i> Absen Masuk Sesi Ini`;
-        btnAbsen.disabled = false;
-    }
+        // E. MESIN PENCEGAH SPAM / DOUBLE ABSEN (Pengecekan Database)
+        btnAbsen.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memeriksa Status...';
+        btnAbsen.disabled = true;
+
+        // Tarik data absen milik guru ini
+        const qCekAbsen = query(collection(db, "absensi"), where("uid_guru", "==", uid));
+        const snapAbsen = await getDocs(qCekAbsen);
+        let sudahAbsen = false;
+        
+        const tglSekarang = new Date().toLocaleDateString('id-ID'); // Ambil tanggal hari ini
+
+        snapAbsen.forEach(doc => {
+            const dataAbsen = doc.data();
+            // Cek apakah pernah absen untuk jadwal ini HARI INI
+            if (dataAbsen.id_jadwal === window.jadwalHariIni.id_jadwal && dataAbsen.timestamp) {
+                const tglAbsenDB = dataAbsen.timestamp.toDate().toLocaleDateString('id-ID');
+                if (tglAbsenDB === tglSekarang) {
+                    sudahAbsen = true;
+                }
+            }
+        });
+
+        // Eksekusi Kunci Gembok
+        if (sudahAbsen) {
+            btnAbsen.innerHTML = `<i class="fa-solid fa-check-double"></i> Sudah Absen Hari Ini`;
+            btnAbsen.disabled = true;
+            btnAbsen.style.backgroundColor = "gray"; // Ubah warna jadi abu-abu
+            btnAbsen.style.boxShadow = "none";
+        } else {
+            btnAbsen.innerHTML = `<i class="fa-solid fa-fingerprint"></i> Absen Masuk Sesi Ini`;
+            btnAbsen.disabled = false;
+            btnAbsen.style.backgroundColor = "var(--primary-color)"; // Hijau kembali
+        }
+    } 
 
     // --- 3. FUNGSI LOGOUT ---
     window.logoutFirebase = function() {
@@ -870,9 +932,16 @@
             if(absen.timestamp) {
                 const tglAbsen = absen.timestamp.toDate();
                 if(tglAbsen.getMonth() === bulanIni && tglAbsen.getFullYear() === tahunIni) {
-                    if(absen.status === "Hadir") hadir++;
-                    else if(absen.status === "Terlambat") telat++;
-                    else if(absen.status === "Izin" || absen.status === "Sakit") izin++;
+                    // --- SINKRONISASI LOGIKA HRD (SAMA DENGAN ADMIN) ---
+                    if (absen.status.includes("Hadir (Kegiatan)")) {
+                        // Abaikan dari angka reguler
+                    } else if (absen.status.includes("Hadir (Badal)") || absen.status === "Hadir") {
+                        hadir++;
+                    } else if (absen.status.includes("Terlambat") || absen.status.includes("Manual Admin")) {
+                        telat++; // Lupa absen masuk ke kolom telat di layar guru!
+                    } else {
+                        izin++;
+                    }
                 }
             }
         });
@@ -884,23 +953,28 @@
 
         // 5. Tampilkan 3 Riwayat Terakhir
         const riwayatList = document.getElementById('riwayatList');
-        riwayatList.innerHTML = ''; // Kosongkan tulisan "Memuat..."
+        riwayatList.innerHTML = '';
 
         if(dataAbsen.length === 0) {
             riwayatList.innerHTML = '<p style="text-align:center; color:gray; font-size:0.9rem;">Belum ada riwayat absen.</p>';
             return;
         }
 
-        const riwayatTerbaru = dataAbsen.slice(0, 3); // Ambil 3 teratas
+        const riwayatTerbaru = dataAbsen.slice(0, 3);
         riwayatTerbaru.forEach(absen => {
             const tgl = absen.timestamp ? absen.timestamp.toDate() : new Date();
             const formatTgl = tgl.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
             const formatJam = tgl.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
             
-            // Set Warna sesuai status
+            // --- PEWARNAAN STATUS BARU ---
             let colorClass = "text-green"; let borderClass = "";
-            if(absen.status === "Terlambat") { colorClass = "text-yellow"; borderClass = "terlambat"; }
-            if(absen.status === "Izin" || absen.status === "Sakit") { colorClass = "text-blue"; borderClass = "izin"; }
+            if (absen.status.includes("Terlambat") || absen.status.includes("Manual Admin")) { 
+                colorClass = "text-yellow"; borderClass = "terlambat"; 
+            } else if (absen.status.includes("Izin") || absen.status.includes("Sakit")) { 
+                colorClass = "text-blue"; borderClass = "izin"; 
+            } else if (absen.status.includes("Kegiatan")) {
+                colorClass = "text-purple"; // Opsional jika kamu punya css warna ungu
+            }
 
             const div = document.createElement('div');
             div.className = `history-item ${borderClass}`;
@@ -959,17 +1033,28 @@
 
                 // Looping untuk merender (menggambar) HTML
                 dataAbsen.forEach(absen => {
-                    if(absen.status === "Hadir") hadir++;
-                    else if(absen.status === "Terlambat") telat++;
-                    else if(absen.status === "Izin" || absen.status === "Sakit") izin++;
+                    // --- SINKRONISASI LOGIKA HRD ---
+                    if (absen.status.includes("Hadir (Kegiatan)")) {
+                        // Abaikan dari angka reguler
+                    } else if (absen.status.includes("Hadir (Badal)") || absen.status === "Hadir") {
+                        hadir++;
+                    } else if (absen.status.includes("Terlambat") || absen.status.includes("Manual Admin")) {
+                        telat++;
+                    } else {
+                        izin++;
+                    }
 
                     const tgl = absen.timestamp.toDate();
                     const formatTgl = tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
                     const formatJam = tgl.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
                     
+                    // --- PEWARNAAN STATUS ---
                     let colorClass = "text-green"; let borderClass = "";
-                    if(absen.status === "Terlambat") { colorClass = "text-yellow"; borderClass = "terlambat"; }
-                    if(absen.status === "Izin" || absen.status === "Sakit") { colorClass = "text-blue"; borderClass = "izin"; }
+                    if (absen.status.includes("Terlambat") || absen.status.includes("Manual Admin")) { 
+                        colorClass = "text-yellow"; borderClass = "terlambat"; 
+                    } else if (absen.status.includes("Izin") || absen.status.includes("Sakit")) { 
+                        colorClass = "text-blue"; borderClass = "izin"; 
+                    }
 
                     const div = document.createElement('div');
                     div.className = `history-item ${borderClass}`;
@@ -1415,6 +1500,100 @@
             }
             reader.readAsDataURL(file);
         };
+
+        // ==========================================
+    // MODUL ABSEN KEGIATAN KHUSUS (DI LUAR JADWAL)
+    // ==========================================
+    
+    window.bukaModalKegiatan = () => {
+        const modal = document.getElementById('modalKegiatan');
+        modal.classList.add('active');
+        
+        const wilayah = window.currentUser.id_wilayah || "PUSAT";
+
+        // Tarik Data Cabang (Sisipkan lat, lon, dan radius di value-nya)
+        getDocs(query(collection(db, "cabang"), where("id_wilayah", "==", wilayah))).then(snap => {
+            let opts = '<option value="" disabled selected>-- Pilih Lokasi Acara --</option>';
+            snap.forEach(d => { 
+                opts += `<option value="${d.data().nama}|${d.data().koordinat.lat}|${d.data().koordinat.lon}|${d.data().radius}">${d.data().nama}</option>`; 
+            });
+            document.getElementById('inputLokasiKegiatan').innerHTML = opts;
+        });
+    };
+
+    window.tutupModalKegiatan = () => {
+        document.getElementById('modalKegiatan').classList.remove('active');
+        document.getElementById('formKegiatan').reset();
+    };
+
+    window.submitAbsenKegiatanFirebase = async (e) => {
+        e.preventDefault();
+        
+        const namaKegiatan = document.getElementById('inputNamaKegiatan').value.trim();
+        const cabangDataRaw = document.getElementById('inputLokasiKegiatan').value;
+
+        // Pecah data cabang yang disisipkan
+        const cabangData = cabangDataRaw.split('|'); 
+        const namaCabang = cabangData[0];
+        const targetLat = parseFloat(cabangData[1]);
+        const targetLon = parseFloat(cabangData[2]);
+        const targetRadius = parseInt(cabangData[3]);
+
+        const btn = document.getElementById('btnSubmitKegiatan');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-satellite-dish fa-beat"></i> Mencari Satelit GPS...';
+        btn.disabled = true;
+
+        if (!navigator.geolocation) {
+            alert("❌ Browser tidak mendukung GPS.");
+            btn.innerHTML = originalText; btn.disabled = false; return;
+        }
+
+        // Proses Pengecekan GPS
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const latUser = pos.coords.latitude;
+                const lonUser = pos.coords.longitude;
+                // Menggunakan fungsi calculateDistance yang sudah ada di kodemu
+                const jarak = calculateDistance(targetLat, targetLon, latUser, lonUser);
+
+                // Validasi Radius
+                if (jarak > targetRadius) {
+                    alert(`❌ Terlalu jauh! Anda berada ${Math.round(jarak)} meter dari lokasi acara. Maksimal jarak absen adalah ${targetRadius}m.`);
+                    btn.innerHTML = originalText; btn.disabled = false; return;
+                }
+
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan Kehadiran...';
+
+                try {
+                    // Simpan data dengan status "Hadir (Kegiatan)"
+                    await addDoc(collection(db, "absensi"), {
+                        uid_guru: auth.currentUser.uid,
+                        nama_guru: window.currentUser.nama,
+                        cabang_absen: namaCabang,
+                        sesi_absen: `Acara: ${namaKegiatan}`, // Disimpan di kolom sesi agar muncul rapi di Laporan Admin
+                        status: "Hadir (Kegiatan)",
+                        koordinat: { lat: latUser, lon: lonUser },
+                        jarak_meter: Math.round(jarak),
+                        timestamp: serverTimestamp()
+                    });
+
+                    tutupModalKegiatan();
+                    alert(`✅ Berhasil! Kehadiran Anda di acara "${namaKegiatan}" telah dicatat.`);
+                    
+                    // Segarkan riwayat di layar home agar absen barunya langsung muncul
+                    muatRingkasanDanRiwayat(auth.currentUser.uid);
+
+                } catch (err) {
+                    console.error(err); alert("❌ Gagal menyimpan absen kegiatan.");
+                } finally {
+                    btn.innerHTML = originalText; btn.disabled = false;
+                }
+            },
+            (err) => { alert("❌ GPS tidak terdeteksi. Izinkan browser mengakses lokasi."); btn.innerHTML = originalText; btn.disabled = false; },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    };
 </script>
 
 </body>
