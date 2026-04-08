@@ -233,6 +233,12 @@
             </header>
 
             <div class="action-card">
+                
+                <div id="wadahPilihJadwal" style="display: none; margin-bottom: 15px;">
+                    <select id="pilihJadwalAbsen" onchange="ubahJadwalAktif(this.value)" style="width: 100%; padding: 12px; border-radius: 10px; border: 2px solid var(--primary-color); outline: none; font-weight: bold; color: var(--primary-dark); background: #e8f8f5; text-align: center; cursor: pointer;">
+                    </select>
+                </div>
+
                 <div class="live-clock" id="liveClock">00:00:00</div>
                 <div class="location-status" id="teksRadius">
                     <i class="fa-solid fa-location-crosshairs"></i>
@@ -690,13 +696,11 @@
         }
     });
 
-    // --- 2. MESIN PENCARI JADWAL CERDAS (BARU) ---
+    // --- 2. MESIN PENCARI JADWAL CERDAS (MENDUKUNG MULTI-SESI) ---
     async function muatJadwalDanCabang(uid) {
-        // A. Tentukan hari ini (Bahasa Indonesia)
         const namaHariArr = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
         const hariIni = namaHariArr[new Date().getDay()];
 
-        // B. Cari Jadwal di Firestore
         const q = query(collection(db, "jadwal"), where("uid_guru", "==", uid), where("hari", "array-contains", hariIni));
         const querySnapshot = await getDocs(q);
 
@@ -704,9 +708,11 @@
         const teksCabang = document.getElementById('teksCabang');
         const teksSesi = document.getElementById('teksSesi');
         const teksRadius = document.querySelector('.location-status span');
+        const wadahDropdown = document.getElementById('wadahPilihJadwal');
+        const selectDropdown = document.getElementById('pilihJadwalAbsen');
 
         if (querySnapshot.empty) {
-            // JIKA TIDAK ADA JADWAL HARI INI
+            wadahDropdown.style.display = 'none';
             teksCabang.innerHTML = `<i class="fa-solid fa-house"></i> Selamat Beristirahat`;
             teksSesi.innerHTML = `<i class="fa-solid fa-bed"></i> Tidak ada jadwal hari ini`;
             teksRadius.innerText = `Sistem Absensi Nonaktif`;
@@ -717,56 +723,91 @@
             return;
         }
 
-        // C. JIKA ADA JADWAL: Tarik Relasi Data Cabang & Sesi
-        window.jadwalHariIni = querySnapshot.docs[0].data(); // Ambil jadwal pertama
-        
-        const cabangSnap = await getDoc(doc(db, "cabang", window.jadwalHariIni.id_cabang));
-        const sesiSnap = await getDoc(doc(db, "master_sesi", window.jadwalHariIni.id_sesi));
-
-        if(cabangSnap.exists()) window.cabangHariIni = cabangSnap.data();
-        if(sesiSnap.exists()) window.sesiHariIni = sesiSnap.data();
-
-        // D. Update Layar dengan Data Asli!
-        teksCabang.innerHTML = `<i class="fa-solid fa-building-columns"></i> ${window.cabangHariIni.nama}`;
-        document.getElementById('profilCabangLengkap').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${window.cabangHariIni.nama}`;
-        
-        teksSesi.innerHTML = `<i class="fa-solid fa-clock"></i> ${window.sesiHariIni.nama_sesi} (${window.sesiHariIni.jam_masuk})`;
-        teksRadius.innerText = `Target GPS: Radius ${window.cabangHariIni.radius} meter`;
-        
-        // E. MESIN PENCEGAH SPAM / DOUBLE ABSEN (Pengecekan Database)
-        btnAbsen.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memeriksa Status...';
-        btnAbsen.disabled = true;
-
-        // Tarik data absen milik guru ini
-        const qCekAbsen = query(collection(db, "absensi"), where("uid_guru", "==", uid));
-        const snapAbsen = await getDocs(qCekAbsen);
-        let sudahAbsen = false;
-        
-        const tglSekarang = new Date().toLocaleDateString('id-ID'); // Ambil tanggal hari ini
-
-        snapAbsen.forEach(doc => {
-            const dataAbsen = doc.data();
-            // Cek apakah pernah absen untuk jadwal ini HARI INI
-            if (dataAbsen.id_jadwal === window.jadwalHariIni.id_jadwal && dataAbsen.timestamp) {
-                const tglAbsenDB = dataAbsen.timestamp.toDate().toLocaleDateString('id-ID');
-                if (tglAbsenDB === tglSekarang) {
-                    sudahAbsen = true;
-                }
-            }
+        // Simpan SEMUA jadwal hari ini ke memori
+        window.semuaJadwalHariIni = [];
+        querySnapshot.forEach(doc => {
+            window.semuaJadwalHariIni.push(doc.data());
         });
 
-        // Eksekusi Kunci Gembok
-        if (sudahAbsen) {
-            btnAbsen.innerHTML = `<i class="fa-solid fa-check-double"></i> Sudah Absen Hari Ini`;
-            btnAbsen.disabled = true;
-            btnAbsen.style.backgroundColor = "gray"; // Ubah warna jadi abu-abu
-            btnAbsen.style.boxShadow = "none";
+        // Jika jadwal > 1, munculkan dropdown!
+        if (window.semuaJadwalHariIni.length > 1) {
+            wadahDropdown.style.display = 'block';
+            let opts = '';
+            window.semuaJadwalHariIni.forEach((jadwal, index) => {
+                opts += `<option value="${index}">${jadwal.nama_sesi} (${jadwal.nama_cabang})</option>`;
+            });
+            selectDropdown.innerHTML = opts;
         } else {
-            btnAbsen.innerHTML = `<i class="fa-solid fa-fingerprint"></i> Absen Masuk Sesi Ini`;
-            btnAbsen.disabled = false;
-            btnAbsen.style.backgroundColor = "var(--primary-color)"; // Hijau kembali
+            wadahDropdown.style.display = 'none';
         }
-    } 
+
+        // Otomatis proses jadwal yang ada di urutan pertama (index 0)
+        await prosesJadwalAktif(0, uid);
+    }
+
+    // Fungsi Pemicu saat Guru mengganti pilihan jadwal di Dropdown
+    window.ubahJadwalAktif = async (indexStr) => {
+        const index = parseInt(indexStr);
+        await prosesJadwalAktif(index, auth.currentUser.uid);
+    };
+
+    // Fungsi Utama Memproses UI & Validasi Gembok Absen
+    async function prosesJadwalAktif(index, uid) {
+        window.jadwalHariIni = window.semuaJadwalHariIni[index];
+        
+        const btnAbsen = document.getElementById('btnAbsen');
+        btnAbsen.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan...';
+        btnAbsen.disabled = true;
+
+        try {
+            const cabangSnap = await getDoc(doc(db, "cabang", window.jadwalHariIni.id_cabang));
+            const sesiSnap = await getDoc(doc(db, "master_sesi", window.jadwalHariIni.id_sesi));
+
+            if(cabangSnap.exists()) window.cabangHariIni = cabangSnap.data();
+            if(sesiSnap.exists()) window.sesiHariIni = sesiSnap.data();
+
+            // Update Teks di Layar
+            document.getElementById('teksCabang').innerHTML = `<i class="fa-solid fa-building-columns"></i> ${window.cabangHariIni.nama}`;
+            document.getElementById('profilCabangLengkap').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${window.cabangHariIni.nama}`;
+            document.getElementById('teksSesi').innerHTML = `<i class="fa-solid fa-clock"></i> ${window.sesiHariIni.nama_sesi} (${window.sesiHariIni.jam_masuk})`;
+            document.querySelector('.location-status span').innerText = `Target GPS: Radius ${window.cabangHariIni.radius} meter`;
+
+            // Cek Double Absen khusus untuk sesi ini
+            const qCekAbsen = query(collection(db, "absensi"), 
+                where("uid_guru", "==", uid), 
+                where("id_jadwal", "==", window.jadwalHariIni.id_jadwal) // Kunci utamanya di sini!
+            );
+            const snapAbsen = await getDocs(qCekAbsen);
+            let sudahAbsen = false;
+            
+            const tglSekarang = new Date().toLocaleDateString('id-ID');
+
+            snapAbsen.forEach(doc => {
+                const dataAbsen = doc.data();
+                if (dataAbsen.timestamp) {
+                    const tglAbsenDB = dataAbsen.timestamp.toDate().toLocaleDateString('id-ID');
+                    if (tglAbsenDB === tglSekarang) {
+                        sudahAbsen = true;
+                    }
+                }
+            });
+
+            // Eksekusi Kunci Gembok
+            if (sudahAbsen) {
+                btnAbsen.innerHTML = `<i class="fa-solid fa-check-double"></i> Sudah Absen Hari Ini`;
+                btnAbsen.disabled = true;
+                btnAbsen.style.backgroundColor = "gray"; 
+                btnAbsen.style.boxShadow = "none";
+            } else {
+                btnAbsen.innerHTML = `<i class="fa-solid fa-fingerprint"></i> Absen Masuk Sesi Ini`;
+                btnAbsen.disabled = false;
+                btnAbsen.style.backgroundColor = "var(--primary-color)"; 
+            }
+        } catch (error) {
+            console.error("Gagal ganti jadwal:", error);
+            alert("Terjadi kesalahan memuat jadwal sesi ini.");
+        }
+    }
 
     // --- 3. FUNGSI LOGOUT ---
     window.logoutFirebase = function() {
