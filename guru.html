@@ -196,6 +196,7 @@
         .btn-menu-profil:active { transform: scale(0.98); }
         .btn-menu-profil .icon-left { width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 15px; }
     </style>
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js"></script>
 </head>
 <body>
     <div id="loadingOverlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-body); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary-color);">
@@ -322,59 +323,214 @@
         </main>
 
         <main id="view-pengajuan" class="view">
-            <header class="header-profile" style="padding-bottom: 30px; border-radius: 0 0 20px 20px;">
-                <h2><i class="fa-solid fa-file-pen"></i> Form Pengajuan</h2>
-                <p>Ajukan Izin/Sakit ke Admin Wilayah Anda.</p>
+            <header class="header-profile" style="padding: 30px 20px 70px 20px; border-radius: 0 0 20px 20px; text-align: center;">
+                <h2 style="margin: 0;"><i class="fa-solid fa-file-pen"></i> Form Pengajuan</h2>
+                <p style="margin-top: 5px; font-size: 0.9rem;">Ajukan Izin/Sakit ke Admin Wilayah Anda.</p>
             </header>
 
-            <div class="section-padding" style="margin-top: 20px;">
-                <div class="action-card" style="margin: 0 0 25px 0; padding: 25px; text-align: left;">
+            <div class="section-padding" style="padding: 0 20px; margin-top: -40px; position: relative; z-index: 2; padding-bottom: 100px;">
+                <div class="action-card" style="background: white; border-radius: 15px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: left;">
                     <form id="formPengajuan" onsubmit="submitPengajuanFirebase(event)">
-                        <div class="input-group">
-                            <label>Periode Izin</label>
-                            <div style="display: flex; gap: 10px;">
-                                <div style="flex: 1;">
-                                    <small style="color:var(--text-muted); font-size:0.75rem;">Dari Tanggal</small>
-                                    <input type="date" id="inputIzinMulai" required style="width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 10px; font-size: 1rem; outline: none; margin-top: 4px;">
+                        
+                        <div class="input-group" style="margin-bottom: 20px;">
+                            <label style="font-weight: bold; color: var(--text-dark); display: block; margin-bottom: 8px; font-size: 0.9rem;">Periode Izin</label>
+                            
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <div style="width: 48%;">
+                                    <small style="color:gray; font-size:0.75rem;">Dari Tanggal</small>
+                                    <input type="date" id="inputIzinMulai" required style="width: 100%; box-sizing: border-box; padding: 10px 5px; border: 1px solid #dfe6e9; border-radius: 8px; font-size: 0.85rem; outline: none; margin-top: 4px;">
                                 </div>
-                                <div style="flex: 1;">
-                                    <small style="color:var(--text-muted); font-size:0.75rem;">Sampai Tanggal</small>
-                                    <input type="date" id="inputIzinSelesai" required style="width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 10px; font-size: 1rem; outline: none; margin-top: 4px;">
+                                <div style="width: 48%;">
+                                    <small style="color:gray; font-size:0.75rem;">Sampai Tanggal</small>
+                                    <input type="date" id="inputIzinSelesai" required style="width: 100%; box-sizing: border-box; padding: 10px 5px; border: 1px solid #dfe6e9; border-radius: 8px; font-size: 0.85rem; outline: none; margin-top: 4px;">
                                 </div>
                             </div>
-                            <small style="color: var(--info); font-size: 0.8rem; margin-top: 5px; display: block;"><i class="fa-solid fa-circle-info"></i> Pilih tanggal yang sama jika hanya izin 1 hari.</small>
+                            
+                            <small style="color: var(--info); font-size: 0.75rem; margin-top: 8px; display: block;"><i class="fa-solid fa-circle-info"></i> Pilih tanggal yang sama jika hanya izin 1 hari.</small>
                         </div>
-                        <div class="input-group">
-                            <label>Jenis Pengajuan</label>
-                            <select id="inputIzinJenis" required style="width: 100%; padding: 12px 15px; border: 1px solid #dfe6e9; border-radius: 10px; font-size: 1rem; outline: none; background: white;">
+
+                        <div class="input-group" style="margin-bottom: 20px;">
+                            <label style="font-weight: bold; color: var(--text-dark); display: block; margin-bottom: 8px; font-size: 0.9rem;">Jenis Pengajuan</label>
+                            <select id="inputIzinJenis" required style="width: 100%; box-sizing: border-box; padding: 12px 15px; border: 1px solid #dfe6e9; border-radius: 8px; font-size: 0.9rem; outline: none; background: white;">
                                 <option value="" disabled selected>Pilih jenis...</option>
                                 <option value="Sakit">Sakit</option>
                                 <option value="Izin Keperluan">Izin Keperluan / Acara</option>
                                 <option value="Cuti">Cuti Panjang</option>
                             </select>
                         </div>
-                        <div class="input-group">
-                            <label>Keterangan / Alasan Lengkap</label>
-                            <textarea id="inputIzinAlasan" rows="3" required placeholder="Jelaskan alasan Anda di sini secara detail..." style="width: 100%; padding: 12px 15px; border: 1px solid #dfe6e9; border-radius: 10px; font-size: 1rem; outline: none; resize: none;"></textarea>
+
+                        <div class="input-group" style="margin-bottom: 20px;">
+                            <label style="font-weight: bold; color: var(--text-dark); display: block; margin-bottom: 8px; font-size: 0.9rem;">Keterangan / Alasan Lengkap</label>
+                            <textarea id="inputIzinAlasan" rows="3" required placeholder="Jelaskan alasan Anda di sini secara detail..." style="width: 100%; box-sizing: border-box; padding: 12px 15px; border: 1px solid #dfe6e9; border-radius: 8px; font-size: 0.9rem; outline: none; resize: none; font-family: inherit;"></textarea>
                         </div>
-                        <button type="submit" class="btn-absen-raksasa" id="btnSubmitPengajuan" style="padding: 12px; font-size: 1rem; margin-top: 10px; background-color: var(--primary-color);">
+
+                        <button type="submit" id="btnSubmitPengajuan" style="padding: 14px; font-size: 1rem; background-color: var(--primary-color); width: 100%; border: none; color: white; border-radius: 10px; font-weight: bold; cursor: pointer;">
                             <i class="fa-solid fa-paper-plane"></i> Kirim Pengajuan
                         </button>
                     </form>
                 </div>
 
-                <h3 class="section-title">Status Pengajuan Saya</h3>
+                <div style="display: flex; align-items: center; margin-bottom: 15px; padding: 0 5px;">
+                    <h3 style="font-size: 1.1rem; color: var(--text-dark); margin: 0;">Status Pengajuan Saya</h3>
+                </div>
                 <div class="history-list" id="listPengajuan">
-                    <div style="text-align: center; color: gray; font-size: 0.9rem; padding: 20px;">
+                    <div style="text-align: center; color: gray; font-size: 0.9rem; padding: 30px 20px; background: white; border-radius: 15px;">
                         <i class="fa-solid fa-spinner fa-spin"></i> Memuat data...
                     </div>
                 </div>
             </div>
         </main>
-        <main id="view-akademik" class="view dummy-view"><i class="fa-solid fa-book-open-reader fa-4x" style="color:var(--info); margin-bottom:20px; opacity: 0.5;"></i><h2>Modul Akademik</h2><p>Fitur ini sedang dalam tahap pengembangan.<br> In syaa Allah akan meliputi fitur pencatatan tahsin, tahfidz, ujian, hingga pembuatan rapor. <br> Mohon ditunggu ya...! </p></main>
+
+        <main id="view-akademik" class="view">
+            
+            <div id="akademik-menu-utama" style="display: block;">
+                <header class="header-profile" style="padding: 30px 20px 40px 20px; border-radius: 0 0 20px 20px;">
+                    <h2><i class="fa-solid fa-graduation-cap"></i> Modul Akademik</h2>
+                    <p style="margin-top: 5px;">Pilih menu aktivitas untuk kelas Anda hari ini.</p>
+                </header>
+
+                <div class="section-padding" style="padding: 0 20px; margin-top: -20px; padding-bottom: 100px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        
+                        <div onclick="bukaSubAkademik('target')" style="background: white; padding: 25px 15px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.04); cursor: pointer; transition: 0.2s; border-bottom: 4px solid var(--warning);">
+                            <div style="background: #fff8e1; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; color: var(--warning); font-size: 1.5rem;">
+                                <i class="fa-solid fa-bullseye"></i>
+                            </div>
+                            <strong style="color: var(--text-dark); font-size: 0.95rem; display: block;">Set Target</strong>
+                            <small style="color: gray; font-size: 0.75rem;">Capaian Awal Santri</small>
+                        </div>
+
+                        <div onclick="bukaSubAkademik('jurnal')" style="background: white; padding: 25px 15px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.04); cursor: pointer; transition: 0.2s; border-bottom: 4px solid var(--primary-color);">
+                            <div style="background: rgba(0, 143, 122, 0.1); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; color: var(--primary-color); font-size: 1.5rem;">
+                                <i class="fa-solid fa-pen-nib"></i>
+                            </div>
+                            <strong style="color: var(--text-dark); font-size: 0.95rem; display: block;">Jurnal KBM</strong>
+                            <small style="color: gray; font-size: 0.75rem;">Catat Setoran Harian</small>
+                        </div>
+
+                        <div onclick="bukaSubAkademik('live')" style="background: white; padding: 25px 15px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.04); cursor: pointer; transition: 0.2s; border-bottom: 4px solid #00cec9;">
+                            <div style="background: rgba(0, 206, 201, 0.1); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; color: #00cec9; font-size: 1.5rem;">
+                                <i class="fa-solid fa-video"></i>
+                            </div>
+                            <strong style="color: var(--text-dark); font-size: 0.95rem; display: block;">Kelas Live</strong>
+                            <small style="color: gray; font-size: 0.75rem;">Tatap Muka Virtual</small>
+                        </div>
+
+                        <div onclick="alert('Modul Ujian akan segera hadir setelah Jurnal selesai!')" style="background: white; padding: 25px 15px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.04); cursor: pointer; transition: 0.2s; border-bottom: 4px solid var(--info); opacity: 0.7;">
+                            <div style="background: rgba(9, 132, 227, 0.1); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; color: var(--info); font-size: 1.5rem;">
+                                <i class="fa-solid fa-file-signature"></i>
+                            </div>
+                            <strong style="color: var(--text-dark); font-size: 0.95rem; display: block;">Ujian</strong>
+                            <small style="color: gray; font-size: 0.75rem;">Evaluasi Triwulan</small>
+                        </div>
+
+                        <div onclick="alert('Modul Munaqosah Tahap Akhir!')" style="background: white; padding: 25px 15px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.04); cursor: pointer; transition: 0.2s; border-bottom: 4px solid #8e44ad; opacity: 0.7;">
+                            <div style="background: #f5eef8; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; color: #8e44ad; font-size: 1.5rem;">
+                                <i class="fa-solid fa-award"></i>
+                            </div>
+                            <strong style="color: var(--text-dark); font-size: 0.95rem; display: block;">Munaqosah</strong>
+                            <small style="color: gray; font-size: 0.75rem;">Sertifikasi Hafalan</small>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div id="akademik-sub-target" style="display: none;">
+                <div style="background: var(--warning); padding: 20px; color: white; display: flex; align-items: center; gap: 15px;">
+                    <button onclick="tutupSubAkademik()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h3 style="margin: 0; font-size: 1.2rem;">Setup Target Santri</h3>
+                </div>
+                <div style="padding: 20px; padding-bottom: 100px;">
+                    <div style="background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                        <label style="font-size: 0.8rem; color: gray; margin-bottom: 5px; display: block;">Pilih Kelas / Rombel</label>
+                        <select id="selectRombelTarget" onchange="muatDaftarSantriTarget(this.value)" style="width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 8px; font-size: 0.9rem; outline: none; background: #f8f9fa;">
+                            <option value="">-- Memuat Kelas Anda --</option>
+                        </select>
+                    </div>
+                    <div id="listTargetSantri">
+                        <div style="text-align: center; color: gray; padding: 40px 20px;"><i class="fa-solid fa-arrow-up fa-2x" style="color: #dfe6e9; margin-bottom: 10px;"></i><br>Pilih rombel untuk menampilkan santri.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="akademik-sub-jurnal" style="display: none;">
+                <div style="background: var(--primary-color); padding: 20px; color: white; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button onclick="tutupSubAkademik()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h3 style="margin: 0; font-size: 1.2rem;">Jurnal Harian</h3>
+                    </div>
+                </div>
+                
+                <div style="padding: 20px; padding-bottom: 100px;">
+                    
+                    <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid var(--primary-color);">
+                        <div style="margin-bottom: 15px;">
+                            <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-dark); display: block; margin-bottom: 5px;">Pilih Rombel / Kelas</label>
+                            <select id="selectKbmHarian" onchange="muatDaftarSantriKBM(this.value)" style="width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 8px; font-size: 0.95rem; outline: none; background: #f8f9fa;">
+                                <option value="">-- Pilih Kelas Anda --</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <div style="flex: 2;">
+                                <label style="font-size: 0.8rem; color: gray; margin-bottom: 5px; display: block;">Periode Aktif</label>
+                                <input type="text" id="kbmPeriode" readonly placeholder="Mengecek..." style="width: 100%; box-sizing: border-box; padding: 12px 10px; border: 1px solid #90caf9; border-radius: 8px; font-size: 0.85rem; outline: none; background: #e3f2fd; color: var(--info); font-weight: bold;">
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="font-size: 0.8rem; color: gray; margin-bottom: 5px; display: block;">Pertemuan</label>
+                                <select id="kbmPertemuan" required style="width: 100%; box-sizing: border-box; padding: 12px 10px; border: 1px solid #dfe6e9; border-radius: 8px; font-size: 0.85rem; outline: none; font-weight: bold; background: white; color: var(--primary-dark);">
+                                    <option value="">Pilih Kelas Dulu</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="listSantriKBM">
+                        <div style="text-align: center; color: gray; padding: 40px 20px;"><i class="fa-solid fa-list-check fa-2x" style="color: #dfe6e9; margin-bottom: 10px;"></i><br>Pilih kelas di atas untuk mulai mengabsen.</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div id="akademik-sub-live" style="display: none;">
+                <div style="background: #00cec9; padding: 20px; color: white; display: flex; align-items: center; gap: 15px;">
+                    <button onclick="tutupSubAkademik(); tinggalkanKelasLive();" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h3 style="margin: 0; font-size: 1.2rem;">Kelas Virtual</h3>
+                </div>
+                
+                <div style="padding: 20px; padding-bottom: 100px;">
+                    <div id="setupKelasLive" style="background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                        <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-dark); display: block; margin-bottom: 5px;">Pilih Rombel / Kelas</label>
+                        <select id="selectRombelLive" onchange="siapkanKelasLive(this.value)" style="width: 100%; padding: 12px; border: 1px solid #dfe6e9; border-radius: 8px; font-size: 0.95rem; outline: none; background: #f8f9fa;">
+                            <option value="">-- Pilih Kelas Anda --</option>
+                        </select>
+                        <button id="btnMulaiLive" onclick="mulaiStreaming()" style="width: 100%; padding: 12px; margin-top: 15px; background: #00cec9; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; display: none;">
+                            <i class="fa-solid fa-video"></i> Mulai Kelas Sekarang
+                        </button>
+                    </div>
+
+                    <div id="areaVideoLive" style="display: none; flex-direction: column; gap: 10px; margin-bottom: 25px;">
+                        <div id="video-guru" style="width: 100%; height: 220px; background: #2d3436; border-radius: 12px; overflow: hidden; position: relative;">
+                            <span style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 3px 8px; border-radius: 5px; font-size: 0.75rem; z-index: 10;">Guru (Anda)</span>
+                        </div>
+                        <div id="grid-video-santri" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;"></div>
+                    </div>
+
+                    <div id="areaFormJurnalLive" style="display: none;">
+                        <h4 style="margin-bottom: 15px; color: var(--primary-color);"><i class="fa-solid fa-pen-nib"></i> Form Setoran Terintegrasi</h4>
+                        <div id="wadahSantriLive"></div>
+                        
+                        <button type="button" onclick="simpanJurnalMassalFirebase()" style="width: 100%; padding: 15px; background: var(--primary-color); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0, 143, 122, 0.3); cursor: pointer; margin-top: 15px;">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Setoran Kelas Live
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
         <main id="view-profil" class="view">
-            <div style="text-align: center; padding-top: 10px;">
-                <div style="text-align: center; padding-top: 10px;">
+            <div style="text-align: center; padding: 20px 20px 100px 20px;">
                 
                 <div style="position: relative; display: inline-block; margin-bottom: 15px;">
                     <img id="profilFoto" src="https://ui-avatars.com/api/?name=Guru&background=008f7a&color=fff" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer;" onclick="document.getElementById('inputFotoProfil').click()">
@@ -387,153 +543,65 @@
                 </div>
                 <h2 id="profilNamaLengkapHeader" style="color: var(--text-dark); margin-bottom: 5px;">Memuat Nama...</h2>
                 <p id="profilCabangLengkap" style="color: var(--text-muted); margin-bottom: 25px; font-weight: bold; background: rgba(0, 143, 122, 0.1); display: inline-block; padding: 5px 15px; border-radius: 20px; color: var(--primary-color);">Memuat Wilayah...</p>
-            </div>
 
-            <div id="peringatanProfil" class="alert-banner hidden">
-                <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.2rem; margin-top: 2px;"></i>
-                <div>
-                    <strong>Biodata Belum Lengkap!</strong><br>
-                    Silakan lengkapi NIK, No. HP, dan Rekening Gaji Anda agar pembayaran honor bulan ini tidak terkendala.
-                </div>
-            </div>
-
-            <button class="btn-menu-profil" onclick="bukaModalProfil()">
-                <div style="display: flex; align-items: center;">
-                    <div class="icon-left" style="background: var(--primary-color);"><i class="fa-solid fa-address-card"></i></div>
-                    <div>
-                        <strong style="color: var(--text-dark); display: block; font-size: 1rem;" id="teksTombolProfil">Lengkapi Biodata</strong>
-                        <span style="color: gray; font-size: 0.75rem;">Informasi KTP, Kontak & Rekening</span>
+                <div id="peringatanProfil" class="alert-banner hidden">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.2rem; margin-top: 2px;"></i>
+                    <div style="text-align: left;">
+                        <strong>Biodata Belum Lengkap!</strong><br>
+                        Silakan lengkapi NIK, No. HP, dan Rekening Gaji Anda agar pembayaran honor bulan ini tidak terkendala.
                     </div>
                 </div>
-                <i class="fa-solid fa-chevron-right" style="color: #cbd5e1;"></i>
-            </button>
 
-            <button class="btn-menu-profil" onclick="bukaModalPassword()">
-                <div style="display: flex; align-items: center;">
-                    <div class="icon-left" style="background: var(--warning);"><i class="fa-solid fa-key"></i></div>
-                    <div>
-                        <strong style="color: var(--text-dark); display: block; font-size: 1rem;">Ganti Password</strong>
-                        <span style="color: gray; font-size: 0.75rem;">Perbarui kata sandi akun Anda</span>
+                <button class="btn-menu-profil" onclick="bukaModalProfil()">
+                    <div style="display: flex; align-items: center;">
+                        <div class="icon-left" style="background: var(--primary-color);"><i class="fa-solid fa-address-card"></i></div>
+                        <div style="text-align: left;">
+                            <strong style="color: var(--text-dark); display: block; font-size: 1rem;" id="teksTombolProfil">Lengkapi Biodata</strong>
+                            <span style="color: gray; font-size: 0.75rem;">Informasi KTP, Kontak & Rekening</span>
+                        </div>
                     </div>
-                </div>
-                <i class="fa-solid fa-chevron-right" style="color: #cbd5e1;"></i>
-            </button>
+                    <i class="fa-solid fa-chevron-right" style="color: #cbd5e1;"></i>
+                </button>
 
-            <button id="btnSwitchAdmin" class="btn-menu-profil" onclick="window.location.href='admin.html'" style="display: none;">
-                <div style="display: flex; align-items: center;">
-                    <div class="icon-left" style="background: var(--info);"><i class="fa-solid fa-gauge-high"></i></div>
-                    <div>
-                        <strong style="color: var(--text-dark); display: block; font-size: 1rem;">Dashboard Admin</strong>
-                        <span style="color: gray; font-size: 0.75rem;">Kembali ke halaman pengelola wilayah</span>
+                <button class="btn-menu-profil" onclick="bukaModalPassword()">
+                    <div style="display: flex; align-items: center;">
+                        <div class="icon-left" style="background: var(--warning);"><i class="fa-solid fa-key"></i></div>
+                        <div style="text-align: left;">
+                            <strong style="color: var(--text-dark); display: block; font-size: 1rem;">Ganti Password</strong>
+                            <span style="color: gray; font-size: 0.75rem;">Perbarui kata sandi akun Anda</span>
+                        </div>
                     </div>
-                </div>
-                <i class="fa-solid fa-chevron-right" style="color: #cbd5e1;"></i>
-            </button>
+                    <i class="fa-solid fa-chevron-right" style="color: #cbd5e1;"></i>
+                </button>
 
-            <button onclick="logoutFirebase()" class="btn-menu-profil" style="margin-top: 30px; border: 1.5px solid var(--danger); box-shadow: none;">
-                <div style="display: flex; align-items: center;">
-                    <div class="icon-left" style="background: #fff3f3; color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i></div>
-                    <strong style="color: var(--danger); display: block; font-size: 1rem;">Keluar Aplikasi</strong>
-                </div>
-            </button>
-
-            <div id="modalEditProfil" class="modal-overlay">
-                <div class="modal-box">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-dark);"><i class="fa-solid fa-address-card" style="color: var(--primary-color);"></i> Form Biodata</h3>
-                        <button onclick="tutupModalProfil()" style="background: none; border: none; font-size: 1.5rem; color: gray; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                <button id="btnSwitchAdmin" class="btn-menu-profil" onclick="window.location.href='admin.html'" style="display: none;">
+                    <div style="display: flex; align-items: center;">
+                        <div class="icon-left" style="background: var(--info);"><i class="fa-solid fa-gauge-high"></i></div>
+                        <div style="text-align: left;">
+                            <strong style="color: var(--text-dark); display: block; font-size: 1rem;">Dashboard Admin</strong>
+                            <span style="color: gray; font-size: 0.75rem;">Kembali ke halaman pengelola wilayah</span>
+                        </div>
                     </div>
-                    
-                    <form id="formProfil" onsubmit="simpanProfilGuru(event)">
-                        <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee;">
-                            <label style="font-size: 0.8rem; color: gray; display: block; margin-bottom: 5px;">Nama Lengkap (Sesuai Kontrak)</label>
-                            <input type="text" id="profilNama" readonly style="width: 100%; padding: 10px; border-radius: 8px; border: none; background: #f4f7f6; color: gray; font-weight: bold; margin-bottom: 10px;">
-                            <label style="font-size: 0.8rem; color: gray; display: block; margin-bottom: 5px;">Email / Akun Login</label>
-                            <input type="text" id="profilEmail" readonly style="width: 100%; padding: 10px; border-radius: 8px; border: none; background: #f4f7f6; color: gray;">
-                        </div>
+                    <i class="fa-solid fa-chevron-right" style="color: #cbd5e1;"></i>
+                </button>
 
-                        <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--primary-color); border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
-                            <p style="font-size: 0.85rem; color: var(--primary-color); font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-address-book"></i> Demografi & Kontak</p>
-                            
-                            <input type="number" id="profilNIK" placeholder="16 Digit NIK KTP *" required minlength="16" style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
-                            <input type="number" id="profilNoHP" placeholder="No. HP / WhatsApp Aktif *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
-                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                <input type="text" id="profilTempatLahir" placeholder="Kota Lahir *" required style="width: 50%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
-                                <input type="date" id="profilTglLahir" required style="width: 50%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
-                            </div>
-                            <textarea id="profilAlamat" rows="2" placeholder="Alamat Domisili Sekarang Lengkap *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;"></textarea>
-                            <select id="profilStatusNikah" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; background: white;">
-                                <option value="" disabled selected>-- Pilih Status Pernikahan * --</option>
-                                <option value="Belum Menikah">Belum Menikah</option>
-                                <option value="Menikah">Menikah</option>
-                            </select>
-                        </div>
-
-                        <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--info); border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
-                            <p style="font-size: 0.85rem; color: var(--info); font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-graduation-cap"></i> Akademik & Status Kepegawaian</p>
-                            
-                            <select id="profilStatusNH" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px; background: white;">
-                                <option value="" disabled selected>-- Pilih Status di Nurul Hayat * --</option>
-                                <option value="Santri Khidmat">Santri Khidmat (Karyawan NH)</option>
-                                <option value="Istri Santri Khidmat">Istri dari Santri Khidmat</option>
-                                <option value="Mudabbir/ah Muqim">Mudabbir / Mudabbirah Muqim</option>
-                                <option value="Mustami Non Muqim">Mustami' Non Muqim</option>
-                                <option value="Mitra Pengajar Eksternal">Mitra Pengajar Eksternal (Murni HJ)</option>
-                            </select>
-                            
-                            <input type="text" id="profilPendidikan" placeholder="Pend. Terakhir (Misal: S1 PAI) *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
-                            <input type="text" id="profilHafalan" placeholder="Hafalan / Syahadah (Misal: 5 Juz / Ummi) *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
-                            <input type="text" id="profilNamaDarurat" placeholder="Kontak Darurat: Nama Keluarga *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
-                            <input type="number" id="profilNoHPDarurat" placeholder="Kontak Darurat: No. HP *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
-                        </div>
-
-                        <div style="background: #fff9f9; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px dashed #ffb8b8;">
-                            <p style="font-size: 0.85rem; color: var(--danger); font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-money-check-dollar"></i> Informasi Rekening Gaji</p>
-                            
-                            <input type="text" id="profilBank" placeholder="Nama Bank (Misal: BSI) *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none; margin-bottom: 10px;">
-                            <input type="number" id="profilNoRekening" placeholder="Nomor Rekening Bank *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none; margin-bottom: 10px;">
-                            <input type="text" id="profilNamaRekening" placeholder="Atas Nama (Sesuai Buku Tabungan) *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none;">
-                        </div>
-
-                        <button type="submit" id="btnSimpanProfil" style="width: 100%; padding: 15px; background: var(--primary-color); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-bottom: 20px;"><i class="fa-solid fa-floppy-disk"></i> Simpan Semua Biodata</button>
-                    </form>
-                </div>
-            </div>
-
-            <div id="modalGantiPassword" class="modal-overlay">
-                <div class="modal-box">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-dark);"><i class="fa-solid fa-key" style="color: var(--warning);"></i> Keamanan Akun</h3>
-                        <button onclick="tutupModalPassword()" style="background: none; border: none; font-size: 1.5rem; color: gray; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="logoutFirebase()" class="btn-menu-profil" style="margin-top: 30px; border: 1.5px solid var(--danger); box-shadow: none;">
+                    <div style="display: flex; align-items: center;">
+                        <div class="icon-left" style="background: #fff3f3; color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i></div>
+                        <strong style="color: var(--danger); display: block; font-size: 1rem;">Keluar Aplikasi</strong>
                     </div>
-                    
-                    <form id="formGantiPassword" onsubmit="gantiPasswordGuru(event)">
-                        <div style="margin-bottom: 15px;">
-                            <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Password LAMA Anda</label>
-                            <input type="password" id="profilPassLama" placeholder="Masukkan password saat ini" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
-                        </div>
-                        <div style="margin-bottom: 25px;">
-                            <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Password BARU</label>
-                            <input type="password" id="profilPassBaru" placeholder="Minimal 6 karakter" required minlength="6" style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
-                        </div>
-                        <button type="submit" id="btnGantiPass" style="width: 100%; padding: 15px; background: var(--warning); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-bottom: 20px;"><i class="fa-solid fa-shield-halved"></i> Update Password</button>
-                    </form>
-                </div>
+                </button>
             </div>
         </main>
 
-    </div> 
-
-    <nav class="bottom-nav">
+    </div> <nav class="bottom-nav">
         <div class="nav-item active" data-target="view-home" onclick="switchView('view-home')"><i class="fa-solid fa-house-chimney"></i><span>Home</span></div>
-        <div class="nav-item" data-target="view-riwayat" onclick="switchView('view-riwayat')">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                <span>Riwayat Absen</span>
-            </div>
+        <div class="nav-item" data-target="view-riwayat" onclick="switchView('view-riwayat')"><i class="fa-solid fa-clock-rotate-left"></i><span>Riwayat</span></div>
         <div class="nav-item" data-target="view-pengajuan" onclick="switchView('view-pengajuan')"><i class="fa-solid fa-file-pen"></i><span>Izin</span></div>
         <div class="nav-item" data-target="view-akademik" onclick="switchView('view-akademik')"><i class="fa-solid fa-book-open-reader"></i><span>Akademik</span></div>
         <div class="nav-item" data-target="view-profil" onclick="switchView('view-profil')"><i class="fa-solid fa-user"></i><span>Profil</span></div>
     </nav>
+
     <div id="modalBadal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
@@ -561,7 +629,7 @@
                         </select>
                     </div>
                     <button type="submit" class="btn-absen-raksasa" id="btnSubmitBadal" style="background-color: var(--info); box-shadow: 0 4px 15px rgba(9, 132, 227, 0.3); padding: 14px; margin-top: 15px;">
-                        <i class="fa-solid fa-location-crosshairs"></i> Deteksi GPS & Simpan Badal
+                        <i class="fa-solid fa-location-crosshairs"></i> Deteksi GPS & Simpan
                     </button>
                 </form>
             </div>
@@ -572,25 +640,215 @@
         <div class="modal-box">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 style="color: var(--text-dark);"><i class="fa-solid fa-users-rectangle" style="color: #0984e3;"></i> Absen Kegiatan</h3>
-                <button onclick="tutupModalKegiatan()" style="background: none; border: none; font-size: 1.5rem; color: gray; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" onclick="tutupModalKegiatan()" style="background: none; border: none; font-size: 1.5rem; color: gray; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            
             <form id="formKegiatan" onsubmit="submitAbsenKegiatanFirebase(event)">
                 <div style="margin-bottom: 15px;">
                     <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Nama / Jenis Kegiatan</label>
                     <input type="text" id="inputNamaKegiatan" placeholder="Contoh: Rapat Bulanan, Pelatihan..." required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
                 </div>
-                
                 <div style="margin-bottom: 25px;">
                     <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Lokasi Kegiatan</label>
                     <select id="inputLokasiKegiatan" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; background: white;">
                         <option value="" disabled selected>Memuat data cabang...</option>
                     </select>
                 </div>
-                
                 <button type="submit" id="btnSubmitKegiatan" style="width: 100%; padding: 15px; background: #0984e3; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">
                     <i class="fa-solid fa-location-dot"></i> Validasi GPS & Absen Hadir
                 </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalEditProfil" class="modal-overlay">
+        <div class="modal-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: var(--text-dark);"><i class="fa-solid fa-address-card" style="color: var(--primary-color);"></i> Form Biodata</h3>
+                <button type="button" onclick="tutupModalProfil()" style="background: none; border: none; font-size: 1.5rem; color: gray; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form id="formProfil" onsubmit="simpanProfilGuru(event)">
+                <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee;">
+                    <label style="font-size: 0.8rem; color: gray; display: block; margin-bottom: 5px;">Nama Lengkap (Sesuai Kontrak)</label>
+                    <input type="text" id="profilNama" readonly style="width: 100%; padding: 10px; border-radius: 8px; border: none; background: #f4f7f6; color: gray; font-weight: bold; margin-bottom: 10px;">
+                    <label style="font-size: 0.8rem; color: gray; display: block; margin-bottom: 5px;">Email / Akun Login</label>
+                    <input type="text" id="profilEmail" readonly style="width: 100%; padding: 10px; border-radius: 8px; border: none; background: #f4f7f6; color: gray;">
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--primary-color); border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
+                    <p style="font-size: 0.85rem; color: var(--primary-color); font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-address-book"></i> Demografi & Kontak</p>
+                    
+                    <input type="number" id="profilNIK" placeholder="16 Digit NIK KTP *" required minlength="16" style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                    <input type="number" id="profilNoHP" placeholder="No. HP / WhatsApp Aktif *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <input type="text" id="profilTempatLahir" placeholder="Kota Lahir *" required style="width: 50%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
+                        <input type="date" id="profilTglLahir" required style="width: 50%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
+                    </div>
+                    <textarea id="profilAlamat" rows="2" placeholder="Alamat Domisili Sekarang Lengkap *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;"></textarea>
+                    <select id="profilStatusNikah" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; background: white;">
+                        <option value="" disabled selected>-- Pilih Status Pernikahan * --</option>
+                        <option value="Belum Menikah">Belum Menikah</option>
+                        <option value="Menikah">Menikah</option>
+                    </select>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--info); border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
+                    <p style="font-size: 0.85rem; color: var(--info); font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-graduation-cap"></i> Akademik & Status Kepegawaian</p>
+                    
+                    <select id="profilStatusNH" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px; background: white;">
+                        <option value="" disabled selected>-- Pilih Status di Nurul Hayat * --</option>
+                        <option value="Santri Khidmat">Santri Khidmat (Karyawan NH)</option>
+                        <option value="Istri Santri Khidmat">Istri dari Santri Khidmat</option>
+                        <option value="Mudabbir/ah Muqim">Mudabbir / Mudabbirah Muqim</option>
+                        <option value="Mustami Non Muqim">Mustami' Non Muqim</option>
+                        <option value="Mitra Pengajar Eksternal">Mitra Pengajar Eksternal (Murni HJ)</option>
+                    </select>
+                    
+                    <input type="text" id="profilPendidikan" placeholder="Pend. Terakhir (Misal: S1 PAI) *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                    <input type="text" id="profilHafalan" placeholder="Hafalan / Syahadah (Misal: 5 Juz / Ummi) *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                    <input type="text" id="profilNamaDarurat" placeholder="Kontak Darurat: Nama Keluarga *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                    <input type="number" id="profilNoHPDarurat" placeholder="Kontak Darurat: No. HP *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
+                </div>
+
+                <div style="background: #fff9f9; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px dashed #ffb8b8;">
+                    <p style="font-size: 0.85rem; color: var(--danger); font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-money-check-dollar"></i> Informasi Rekening Gaji</p>
+                    
+                    <input type="text" id="profilBank" placeholder="Nama Bank (Misal: BSI) *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                    <input type="number" id="profilNoRekening" placeholder="Nomor Rekening Bank *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none; margin-bottom: 10px;">
+                    <input type="text" id="profilNamaRekening" placeholder="Atas Nama (Sesuai Buku Tabungan) *" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none;">
+                </div>
+
+                <button type="submit" id="btnSimpanProfil" style="width: 100%; padding: 15px; background: var(--primary-color); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-bottom: 20px;"><i class="fa-solid fa-floppy-disk"></i> Simpan Semua Biodata</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalCapaianAwal" class="modal-overlay">
+        <div class="modal-box" style="max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="position: sticky; top: -30px; background: white; z-index: 10; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee;">
+                <h3 style="color:var(--text-dark); margin:0;"><i class="fa-solid fa-sliders" style="color:var(--warning);"></i> Capaian Awal & Target</h3>
+                <button type="button" class="btn-close-modal" onclick="tutupModalCapaianAwal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form id="formCapaianAwal" onsubmit="simpanCapaianAwalFirebase(event)">
+                <input type="hidden" id="capaianIdSantri">
+
+                <div style="background: #f4f7f6; padding: 12px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+                    <span style="font-size:0.8rem; color:gray;">Pengaturan untuk Santri:</span><br>
+                    <strong style="color: var(--text-dark); font-size: 1.1rem;" id="capaianNamaSantri">Nama Santri</strong>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--primary-color); border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
+                    <p style="font-size: 0.85rem; color: var(--primary-color); font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-book-quran"></i> 1. Capaian Hafalan Terakhir</p>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label style="font-size:0.75rem; color:gray;">Juz</label>
+                            <input type="number" id="capJuz" placeholder="Cth: 30" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size:0.75rem; color:gray;">Halaman</label>
+                            <input type="number" id="capHal" placeholder="Cth: 2" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size:0.75rem; color:gray;">Baris</label>
+                            <input type="number" id="capBaris" placeholder="Cth: 5" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--info); border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
+                    <p style="font-size: 0.85rem; color: var(--info); font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-book-open-reader"></i> 2. Capaian Tahsin Terakhir</p>
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <div style="flex: 1;">
+                            <label style="font-size:0.75rem; color:gray;">Metode</label>
+                            <select id="capTahsinMetode" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none; background: white;">
+                                <option value="" disabled selected>- Pilih -</option>
+                                <option value="Khairunnas">Khairunnas</option>
+                                <option value="Ummi">Ummi</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size:0.75rem; color:gray;">Jilid</label>
+                            <select id="capTahsinJilid" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none; background: white;">
+                                <option value="" disabled selected>- Pilih -</option>
+                                <option value="1">Jilid 1</option>
+                                <option value="2">Jilid 2</option>
+                                <option value="3">Jilid 3</option>
+                                <option value="4">Jilid 4</option>
+                                <option value="5">Jilid 5</option>
+                                <option value="6">Jilid 6</option>
+                                <option value="Tajwid">Tajwid</option>
+                                <option value="Ghorib">Ghorib</option>
+                                <option value="Al Quran">Al Quran</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; color:gray;">Halaman Terakhir</label>
+                        <input type="number" id="capTahsinHal" placeholder="Cth: 12" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none;">
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 25px; border-left: 4px solid var(--warning); border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
+                    <p style="font-size: 0.85rem; color: var(--warning); font-weight: bold; margin-bottom: 10px;"><i class="fa-solid fa-bullseye"></i> 3. Pengaturan Target & Urutan</p>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-size:0.75rem; color:gray; font-weight:bold;">Total Capaian Juz (Saat ini)</label>
+                        <input type="number" id="capTotalJuz" value="0" min="0" max="30" required style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-size:0.75rem; color:gray; font-weight:bold;">Urutan Juz Hafalan (Planning)</label>
+                        <input type="text" id="capUrutanJuz" placeholder="Cth: 30, 29, 1, 2, 3..." style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-size:0.75rem; color:gray; font-weight:bold;">Urutan Surat (Khusus Juz 30)</label>
+                        <select id="capUrutanSurat" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none; background: white;">
+                            <option value="An-Naba -> An-Naas">Dari An-Naba s/d An-Naas</option>
+                            <option value="An-Naas -> An-Naba">Dari An-Naas s/d An-Naba</option>
+                        </select>
+                    </div>
+
+                    <div style="background: #fffdf5; padding: 10px; border-radius: 8px; border: 1px dashed #f1c40f;">
+                        <label style="font-size:0.75rem; color:gray; font-weight:bold; margin-bottom: 5px; display:block;">Target per Tatap Muka (TM)</label>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="capTargetTipe" required style="flex: 1; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none; background: white;">
+                                <option value="Halaman">Halaman</option>
+                                <option value="Baris">Baris</option>
+                            </select>
+                            <input type="number" id="capTargetJml" required step="0.5" min="0.5" placeholder="Jumlah (Min 0.5)" style="flex: 1; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #dfe6e9; outline: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="btnSimpanCapaianAwal" style="padding: 14px; font-size: 1rem; background-color: var(--warning); width: 100%; border: none; color: white; border-radius: 10px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(243, 156, 18, 0.3);">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Capaian Awal
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalGantiPassword" class="modal-overlay">
+        <div class="modal-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: var(--text-dark);"><i class="fa-solid fa-key" style="color: var(--warning);"></i> Keamanan Akun</h3>
+                <button type="button" onclick="tutupModalPassword()" style="background: none; border: none; font-size: 1.5rem; color: gray; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form id="formGantiPassword" onsubmit="gantiPasswordGuru(event)">
+                <div style="margin-bottom: 15px;">
+                    <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Password LAMA Anda</label>
+                    <input type="password" id="profilPassLama" placeholder="Masukkan password saat ini" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
+                </div>
+                <div style="margin-bottom: 25px;">
+                    <label style="font-size: 0.85rem; color: gray; margin-bottom: 5px; display: block; font-weight: bold;">Password BARU</label>
+                    <input type="password" id="profilPassBaru" placeholder="Minimal 6 karakter" required minlength="6" style="width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #dfe6e9; outline: none;">
+                </div>
+                <button type="submit" id="btnGantiPass" style="width: 100%; padding: 15px; background: var(--warning); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-bottom: 20px;"><i class="fa-solid fa-shield-halved"></i> Update Password</button>
             </form>
         </div>
     </div>
@@ -620,7 +878,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     // IMPORT BARU: query, where, getDocs untuk mencari jadwal!
-    import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs, onSnapshot, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
     
     const firebaseConfig = {
@@ -679,6 +937,8 @@
                     await muatRingkasanDanRiwayat(user.uid); 
 
                     window.loadDataPengajuan();
+
+                    window.muatPilihanRombelGuru();
 
                 } else {
                     alert("Akses Ditolak: Anda tidak memiliki izin untuk halaman ini.");
@@ -1433,6 +1693,37 @@
         window.bukaModalProfil = () => document.getElementById('modalEditProfil').classList.add('active');
         window.tutupModalProfil = () => document.getElementById('modalEditProfil').classList.remove('active');
         
+        window.bukaModalPassword = () => {
+            document.getElementById('formGantiPassword').reset(); // Kosongkan saat dibuka
+            document.getElementById('modalGantiPassword').classList.add('active');
+        };
+        window.tutupModalPassword = () => document.getElementById('modalGantiPassword').classList.remove('active');
+
+        window.gantiPasswordGuru = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnGantiPass');
+        const passBaru = document.getElementById('profilPassBaru').value;
+        
+        if(confirm("Yakin ingin mengganti password?\n(Peringatan: Jika keamanan kadaluarsa, Anda akan diminta logout dan login kembali terlebih dahulu).")) {
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengupdate...'; btn.disabled = true;
+            try {
+                const user = auth.currentUser;
+                await updatePassword(user, passBaru);
+                alert("✅ Password berhasil diubah! Silakan gunakan password baru ini pada login berikutnya.");
+                document.getElementById('profilPassBaru').value = ''; // Kosongkan input
+            } catch (error) {
+                console.error("Gagal ganti password:", error); 
+                if(error.code === 'auth/requires-recent-login') {
+                    alert("⚠️ Sesi login Anda sudah terlalu lama. Silakan logout dan login kembali sebelum mengganti password.");
+                } else {
+                    alert("❌ Gagal mengganti password: " + error.message);
+                }
+            } finally {
+                btn.innerHTML = 'Update Password'; btn.disabled = false;
+            }
+        }
+    };
+
         // AKSI SIMPAN BIODATA (MEREKAM WAKTU SERVER)
         window.simpanProfilGuru = async (e) => {
             e.preventDefault();
@@ -1543,6 +1834,488 @@
         };
 
         // ==========================================
+        // MODUL AKADEMIK TAHFIDZ (KHUSUS GURU)
+        // ==========================================
+
+        // --- SISTEM NAVIGASI SUB-MENU ---
+        window.bukaSubAkademik = (menu) => {
+            document.getElementById('akademik-menu-utama').style.display = 'none';
+            if(menu === 'target') {
+                document.getElementById('akademik-sub-target').style.display = 'block';
+                // Tidak perlu lagi copy-paste innerHTML di sini karena sudah diisi langsung oleh fungsi di bawah
+            } else if (menu === 'jurnal') {
+                document.getElementById('akademik-sub-jurnal').style.display = 'block';
+                
+                // Panggil pencari periode saat jurnal dibuka
+                window.muatPeriodeAktif(); 
+            }
+        };
+
+        window.tutupSubAkademik = () => {
+            document.getElementById('akademik-sub-target').style.display = 'none';
+            document.getElementById('akademik-sub-jurnal').style.display = 'none';
+            document.getElementById('akademik-menu-utama').style.display = 'block';
+        };
+
+        // --- 1. TARIK ROMBEL GURU ---
+        window.muatPilihanRombelGuru = async () => {
+            const uid = auth.currentUser.uid;
+            
+            // Tangkap langsung kedua dropdown yang ada di HTML baru
+            const selectTarget = document.getElementById('selectRombelTarget'); 
+            const selectHarian = document.getElementById('selectKbmHarian');
+            
+            try {
+                const q = query(collection(db, "rombel"), where("uid_guru", "==", uid));
+                const snapshot = await getDocs(q);
+                let opts = '<option value="" disabled selected>-- Pilih Kelas / Rombel Anda --</option>';
+                let count = 0;
+                
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    opts += `<option value="${doc.id}">${d.nama_rombel} (${d.cabang})</option>`;
+                    count++;
+                });
+
+                if(count === 0) opts = '<option value="" disabled selected>Belum ada jadwal rombel</option>';
+                
+                // Tembakkan datanya langsung ke kedua dropdown tersebut (Aman dari null)
+                if(selectTarget) selectTarget.innerHTML = opts;
+                if(selectHarian) selectHarian.innerHTML = opts;
+                
+            } catch (error) { 
+                console.error("Gagal memuat rombel:", error); 
+            }
+        };
+
+        // --- 2. RENDER DAFTAR SANTRI KHUSUS UNTUK SET TARGET ---
+        window.muatDaftarSantriTarget = async (idRombel) => {
+            const wadah = document.getElementById('listTargetSantri');
+            if(!idRombel) return;
+            wadah.innerHTML = '<div style="text-align:center; padding: 20px; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan data...</div>';
+            
+            try {
+                const docSnap = await getDoc(doc(db, "rombel", idRombel));
+                if (docSnap.exists()) {
+                    const santriArr = docSnap.data().santri || [];
+                    if (santriArr.length === 0) { wadah.innerHTML = '<p style="text-align:center; color:gray;">Belum ada santri.</p>'; return; }
+
+                    let html = '';
+                    santriArr.forEach(s => {
+                        html += `
+                            <div style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-left: 4px solid var(--warning);">
+                                <div>
+                                    <strong style="color: var(--text-dark); display:block; font-size: 0.95rem;">${s.nama}</strong>
+                                    <small style="color: gray;">NIS: ${s.nis}</small>
+                                </div>
+                                <button type="button" onclick="bukaModalCapaianAwal('${s.id_santri}', '${s.nama}')" style="background: #fff8e1; color: var(--warning); border: 1px solid #ffe082; padding: 8px 15px; border-radius: 8px; font-weight:bold; font-size:0.8rem; cursor: pointer;">
+                                    <i class="fa-solid fa-sliders"></i> Atur Target
+                                </button>
+                            </div>
+                        `;
+                    });
+                    wadah.innerHTML = html;
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        // --- 3. MESIN PENCARI PERIODE AKTIF (DARI ADMIN NANTI) ---
+        window.muatPeriodeAktif = async () => {
+            const inputPeriode = document.getElementById('kbmPeriode');
+            inputPeriode.value = "Mencari...";
+            try {
+                const q = query(collection(db, "master_periode"), where("status", "==", "Aktif"));
+                const snap = await getDocs(q);
+                
+                if (!snap.empty) {
+                    inputPeriode.value = snap.docs[0].data().nama_periode; 
+                } else {
+                    inputPeriode.value = "Genap 2025/2026"; // Default darurat
+                }
+                
+                if (document.getElementById('selectKbmHarian').value) {
+                    window.muatOpsiPertemuan();
+                }
+            } catch (error) {
+                console.error("Gagal muat periode aktif:", error);
+                inputPeriode.value = "Error";
+            }
+        };
+
+        // --- 4. MESIN PENGECEK PERTEMUAN CERDAS (ANTI DOUBLE) ---
+        window.muatOpsiPertemuan = async () => {
+            const idRombel = document.getElementById('selectKbmHarian').value;
+            const periode = document.getElementById('kbmPeriode').value.trim();
+            const selectPertemuan = document.getElementById('kbmPertemuan');
+
+            if (!idRombel || !periode) {
+                selectPertemuan.innerHTML = '<option value="">Pilih Kelas & Periode</option>'; return;
+            }
+
+            selectPertemuan.innerHTML = '<option value="">Mengecek...</option>';
+
+            try {
+                const qJurnal = query(collection(db, "jurnal_kelas"), where("id_rombel", "==", idRombel), where("periode", "==", periode));
+                const snapJurnal = await getDocs(qJurnal);
+                let pertemuanTerpakai = [];
+                
+                snapJurnal.forEach(doc => { pertemuanTerpakai.push(parseInt(doc.data().pertemuan)); });
+
+                let opts = '<option value="" disabled selected>Pilih Ke-</option>';
+                let pertemuanTersediaPertama = null;
+
+                for (let i = 1; i <= 50; i++) {
+                    if (pertemuanTerpakai.includes(i)) {
+                        opts += `<option value="${i}" disabled>Ke-${i} (Sudah Diisi)</option>`;
+                    } else {
+                        opts += `<option value="${i}">Ke-${i}</option>`;
+                        if (!pertemuanTersediaPertama) pertemuanTersediaPertama = i; 
+                    }
+                }
+
+                selectPertemuan.innerHTML = opts;
+                if (pertemuanTersediaPertama) selectPertemuan.value = pertemuanTersediaPertama;
+
+            } catch (error) {
+                console.error("Gagal mengecek pertemuan:", error);
+                selectPertemuan.innerHTML = '<option value="">Error</option>';
+            }
+        };
+
+        // --- 5. RENDER JURNAL KBM HARIAN ---
+        window.muatDaftarSantriKBM = async (idRombel) => {
+            // Jalankan pengecekan pertemuan otomatis
+            if (document.getElementById('akademik-sub-jurnal').style.display === 'block') {
+                window.muatOpsiPertemuan();
+            }
+
+            const wadah = document.getElementById('listSantriKBM');
+            if(!idRombel) return;
+            wadah.innerHTML = '<div style="text-align:center; padding: 20px; color:gray;"><i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan formulir...</div>';
+            
+            try {
+                const docSnap = await getDoc(doc(db, "rombel", idRombel));
+                if (docSnap.exists()) {
+                    const santriArr = docSnap.data().santri || [];
+                    
+                    // Simpan data santri ke memori RAM untuk dieksekusi tombol simpan nanti
+                    window.currentSantriKBM = santriArr; 
+
+                    if (santriArr.length === 0) { wadah.innerHTML = '<p style="text-align:center; color:gray;">Belum ada santri.</p>'; return; }
+
+                    let htmlCards = '';
+                    santriArr.forEach((s, index) => {
+                        htmlCards += `
+                            <div style="background: white; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 1px solid #eee; overflow: hidden;">
+                                
+                                <div style="padding: 15px; background: #fafbfc; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <div>
+                                        <h4 style="margin: 0 0 5px 0; color: var(--primary-dark); font-size: 1rem;">${index + 1}. ${s.nama}</h4>
+                                        <div style="font-size: 0.75rem; color: gray;" id="kbmTarget_${s.id_santri}">Target: Memuat...</div>
+                                    </div>
+                                    <div style="font-size: 0.75rem; text-align: right;" id="kbmLast_${s.id_santri}">
+                                        <i class="fa-solid fa-spinner fa-spin" style="color:var(--info);"></i>
+                                    </div>
+                                </div>
+
+                                <div style="padding: 10px 15px; border-bottom: 1px dashed #eee;">
+                                    <div style="display: flex; background: #f4f7f6; border-radius: 8px; overflow: hidden; font-size: 0.8rem;">
+                                        <label style="flex: 1; text-align: center; cursor: pointer; position: relative;">
+                                            <input type="radio" name="absen_${s.id_santri}" value="Hadir" checked style="position: absolute; opacity: 0; pointer-events: none;" onchange="toggleFormSetoran('${s.id_santri}', true)">
+                                            <div class="radio-btn" style="padding: 8px 0; background: var(--primary-color); color: white; font-weight: bold; transition: 0.2s;">Hadir</div>
+                                        </label>
+                                        <label style="flex: 1; text-align: center; cursor: pointer; position: relative; border-left: 1px solid #dfe6e9;">
+                                            <input type="radio" name="absen_${s.id_santri}" value="Izin" style="position: absolute; opacity: 0; pointer-events: none;" onchange="toggleFormSetoran('${s.id_santri}', false)">
+                                            <div class="radio-btn" style="padding: 8px 0; color: gray; transition: 0.2s;">Izin</div>
+                                        </label>
+                                        <label style="flex: 1; text-align: center; cursor: pointer; position: relative; border-left: 1px solid #dfe6e9;">
+                                            <input type="radio" name="absen_${s.id_santri}" value="Sakit" style="position: absolute; opacity: 0; pointer-events: none;" onchange="toggleFormSetoran('${s.id_santri}', false)">
+                                            <div class="radio-btn" style="padding: 8px 0; color: gray; transition: 0.2s;">Sakit</div>
+                                        </label>
+                                        <label style="flex: 1; text-align: center; cursor: pointer; position: relative; border-left: 1px solid #dfe6e9;">
+                                            <input type="radio" name="absen_${s.id_santri}" value="Alpha" style="position: absolute; opacity: 0; pointer-events: none;" onchange="toggleFormSetoran('${s.id_santri}', false)">
+                                            <div class="radio-btn" style="padding: 8px 0; color: gray; transition: 0.2s;">Alpha</div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div id="areaSetoran_${s.id_santri}" style="padding: 15px; transition: opacity 0.3s;">
+                                    <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                                        <div style="width: 70px; font-size: 0.8rem; font-weight: bold; color: var(--text-dark);">Ziyadah</div>
+                                        <input type="number" step="0.5" min="0" placeholder="Jml (Hal/Brs)" id="ziyadahJml_${s.id_santri}" style="flex: 1; padding: 8px; border: 1px solid #dfe6e9; border-radius: 6px; outline: none; font-size: 0.85rem;">
+                                        <select id="ziyadahNilai_${s.id_santri}" style="width: 70px; padding: 8px; border: 1px solid #dfe6e9; border-radius: 6px; outline: none; font-weight: bold; background: white;">
+                                            <option value="">Nilai</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                                        </select>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                                        <div style="width: 70px; font-size: 0.8rem; font-weight: bold; color: var(--text-dark);">Tahsin</div>
+                                        <input type="number" step="0.5" min="0" placeholder="Jml (Hal/Brs)" id="tahsinJml_${s.id_santri}" style="flex: 1; padding: 8px; border: 1px solid #dfe6e9; border-radius: 6px; outline: none; font-size: 0.85rem;">
+                                        <select id="tahsinNilai_${s.id_santri}" style="width: 70px; padding: 8px; border: 1px solid #dfe6e9; border-radius: 6px; outline: none; font-weight: bold; background: white;">
+                                            <option value="">Nilai</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                                        </select>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; align-items: center;">
+                                        <div style="width: 70px; font-size: 0.8rem; font-weight: bold; color: var(--text-dark);">Murojaah</div>
+                                        <input type="number" step="0.5" min="0" placeholder="Jml (Hal/Brs)" id="murojaahJml_${s.id_santri}" style="flex: 1; padding: 8px; border: 1px solid #dfe6e9; border-radius: 6px; outline: none; font-size: 0.85rem;">
+                                        <select id="murojaahNilai_${s.id_santri}" style="width: 70px; padding: 8px; border: 1px solid #dfe6e9; border-radius: 6px; outline: none; font-weight: bold; background: white;">
+                                            <option value="">Nilai</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    // TOMBOL SIMPAN MASSAL DI BAWAH KARTU
+                    htmlCards += `
+                        <button type="button" id="btnSimpanJurnalMassal" onclick="simpanJurnalMassalFirebase()" style="width: 100%; padding: 15px; background: var(--primary-color); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0, 143, 122, 0.3); cursor: pointer; margin-top: 10px;">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Semua Setoran
+                        </button>
+                    `;
+
+                    wadah.innerHTML = htmlCards;
+
+                    // Efek Warna Radio Button
+                    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            const groupName = this.name;
+                            document.querySelectorAll(`input[name="${groupName}"] + .radio-btn`).forEach(div => {
+                                div.style.background = 'transparent'; div.style.color = 'gray'; div.style.fontWeight = 'normal';
+                            });
+                            const activeDiv = this.nextElementSibling;
+                            if(this.value === 'Hadir') {
+                                activeDiv.style.background = 'var(--primary-color)'; activeDiv.style.color = 'white';
+                            } else {
+                                activeDiv.style.background = 'var(--danger)'; activeDiv.style.color = 'white';
+                            }
+                            activeDiv.style.fontWeight = 'bold';
+                        });
+                    });
+
+                    // Suntik Data Capaian Terakhir
+                    santriArr.forEach(async (s) => {
+                        try {
+                            const capSnap = await getDoc(doc(db, "setting_capaian", s.id_santri));
+                            if(capSnap.exists()) {
+                                const d = capSnap.data();
+                                document.getElementById(`kbmTarget_${s.id_santri}`).innerHTML = `<i class="fa-solid fa-bullseye" style="color:var(--warning);"></i> Tgt: ${d.target_jumlah||0} ${d.target_tipe||'Hal'}/TM`;
+                                document.getElementById(`kbmLast_${s.id_santri}`).innerHTML = `
+                                    <span style="color:gray;">Capaian Terakhir:</span><br>
+                                    <strong style="color:var(--primary-color);">Jz ${d.hafalan_juz||'-'} Hal ${d.hafalan_hal||'-'}</strong><br>
+                                    <strong style="color:var(--info);">Thsn ${d.tahsin_jilid||'-'} Hal ${d.tahsin_hal||'-'}</strong>
+                                `;
+                            } else {
+                                document.getElementById(`kbmLast_${s.id_santri}`).innerHTML = `<span style="color:#d63031;">Target belum diset</span>`;
+                            }
+                        } catch (e) {}
+                    });
+
+                }
+            } catch (error) {
+                console.error(error); wadah.innerHTML = '<div style="text-align:center; padding: 20px; color:red;">Gagal memuat.</div>';
+            }
+        };
+
+        // Kunci inputan jika anak tidak hadir
+        window.toggleFormSetoran = (idSantri, isHadir) => {
+            const area = document.getElementById(`areaSetoran_${idSantri}`);
+            if(isHadir) {
+                area.style.opacity = '1'; area.style.pointerEvents = 'auto';
+            } else {
+                area.style.opacity = '0.4'; area.style.pointerEvents = 'none';
+                document.getElementById(`ziyadahJml_${idSantri}`).value = ''; document.getElementById(`ziyadahNilai_${idSantri}`).value = '';
+                document.getElementById(`tahsinJml_${idSantri}`).value = ''; document.getElementById(`tahsinNilai_${idSantri}`).value = '';
+                document.getElementById(`murojaahJml_${idSantri}`).value = ''; document.getElementById(`murojaahNilai_${idSantri}`).value = '';
+            }
+        };
+
+        // --- 6. MESIN EKSEKUTOR JURNAL MASSAL (DUAL-WRITE UNTUK BUKU INDUK) ---
+        window.simpanJurnalMassalFirebase = async () => {
+            const idRombel = document.getElementById('selectKbmHarian').value;
+            const namaRombel = document.getElementById('selectKbmHarian').options[document.getElementById('selectKbmHarian').selectedIndex].text;
+            const periode = document.getElementById('kbmPeriode').value;
+            const pertemuan = document.getElementById('kbmPertemuan').value;
+            const btn = document.getElementById('btnSimpanJurnalMassal');
+
+            if (!idRombel || !periode || !pertemuan) {
+                alert("⚠️ Harap lengkapi Kelas, Periode, dan Pertemuan terlebih dahulu!"); return;
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan Jurnal Kelas & Buku Induk...';
+            btn.disabled = true;
+
+            let detailSantri = []; 
+            let janjiSimpanBukuInduk = []; // Array untuk menampung perintah tembakan ke Buku Induk
+
+            const tanggalSekarang = new Date().toISOString().split('T')[0];
+
+            // Looping membaca inputan Guru
+            window.currentSantriKBM.forEach(s => {
+                const statusAbsen = document.querySelector(`input[name="absen_${s.id_santri}"]:checked`).value;
+                
+                let z_jml = 0, z_nilai = '', t_jml = 0, t_nilai = '', m_jml = 0, m_nilai = '';
+
+                if (statusAbsen === 'Hadir') {
+                    z_jml = parseFloat(document.getElementById(`ziyadahJml_${s.id_santri}`).value) || 0;
+                    z_nilai = document.getElementById(`ziyadahNilai_${s.id_santri}`).value;
+                    t_jml = parseFloat(document.getElementById(`tahsinJml_${s.id_santri}`).value) || 0;
+                    t_nilai = document.getElementById(`tahsinNilai_${s.id_santri}`).value;
+                    m_jml = parseFloat(document.getElementById(`murojaahJml_${s.id_santri}`).value) || 0;
+                    m_nilai = document.getElementById(`murojaahNilai_${s.id_santri}`).value;
+                }
+
+                const dataAnak = {
+                    id_santri: s.id_santri,
+                    nama: s.nama,
+                    nis: s.nis,
+                    status_absen: statusAbsen,
+                    ziyadah: { jumlah: z_jml, nilai: z_nilai },
+                    tahsin: { jumlah: t_jml, nilai: t_nilai },
+                    murojaah: { jumlah: m_jml, nilai: m_nilai }
+                };
+
+                // 1. Masukkan ke keranjang Buku Kelas
+                detailSantri.push(dataAnak);
+
+                // 2. Siapkan peluru untuk Buku Induk Santri (Untuk dibaca Ortu nanti)
+                // Kita tambahkan info Guru dan Kelas sebagai "Stempel Sejarah"
+                const tembakanIndividu = addDoc(collection(db, "jurnal_santri"), {
+                    id_santri: s.id_santri,
+                    nama_santri: s.nama,
+                    nis: s.nis,
+                    tanggal: tanggalSekarang,
+                    periode: periode,
+                    pertemuan: parseInt(pertemuan),
+                    stempel_rombel: namaRombel, // Agar ortu tahu saat itu dia diajar di kelas apa
+                    stempel_guru: window.currentUser.nama, // Dan diajar oleh siapa
+                    status_absen: statusAbsen,
+                    ziyadah: { jumlah: z_jml, nilai: z_nilai },
+                    tahsin: { jumlah: t_jml, nilai: t_nilai },
+                    murojaah: { jumlah: m_jml, nilai: m_nilai },
+                    timestamp: serverTimestamp()
+                });
+                janjiSimpanBukuInduk.push(tembakanIndividu);
+            });
+
+            try {
+                // A. Tembakkan Keranjang Buku Kelas (Untuk Admin & Gaji)
+                await addDoc(collection(db, "jurnal_kelas"), {
+                    id_rombel: idRombel,
+                    nama_rombel: namaRombel,
+                    periode: periode,
+                    pertemuan: parseInt(pertemuan),
+                    tanggal_catat: tanggalSekarang, 
+                    uid_guru: auth.currentUser.uid,
+                    nama_guru: window.currentUser.nama,
+                    data_santri: detailSantri, 
+                    timestamp: serverTimestamp()
+                });
+
+                // B. Tembakkan semua peluru Buku Induk Santri secara bersamaan! (Sangat Cepat)
+                await Promise.all(janjiSimpanBukuInduk);
+
+                alert(`✅ Sukses! Jurnal Kelas dan Buku Induk Santri untuk Pertemuan Ke-${pertemuan} berhasil dikunci.`);
+                
+                window.muatOpsiPertemuan(); 
+                window.muatDaftarSantriKBM(idRombel); 
+                
+            } catch (error) {
+                console.error("Gagal menyimpan jurnal massal:", error);
+                alert("❌ Terjadi kesalahan jaringan. Gagal menyimpan jurnal.");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Simpan Semua Setoran';
+                btn.disabled = false;
+            }
+        };
+        
+        // ==========================================
+        // MODUL: CAPAIAN AWAL & TARGET SANTRI
+        // ==========================================
+        
+        window.bukaModalCapaianAwal = async (idSantri, namaSantri) => {
+            document.getElementById('formCapaianAwal').reset();
+            document.getElementById('capaianIdSantri').value = idSantri;
+            document.getElementById('capaianNamaSantri').innerText = namaSantri;
+            
+            document.getElementById('modalCapaianAwal').classList.add('active');
+
+            // Ambil data jika sebelumnya sudah pernah diisi
+            try {
+                const docRef = doc(db, "setting_capaian", idSantri);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const d = docSnap.data();
+                    document.getElementById('capJuz').value = d.hafalan_juz || '';
+                    document.getElementById('capHal').value = d.hafalan_hal || '';
+                    document.getElementById('capBaris').value = d.hafalan_baris || '';
+                    
+                    document.getElementById('capTahsinMetode').value = d.tahsin_metode || '';
+                    document.getElementById('capTahsinJilid').value = d.tahsin_jilid || '';
+                    document.getElementById('capTahsinHal').value = d.tahsin_hal || '';
+                    
+                    document.getElementById('capTotalJuz').value = d.total_juz !== undefined ? d.total_juz : 0;
+                    document.getElementById('capUrutanJuz').value = d.urutan_juz || '';
+                    document.getElementById('capUrutanSurat').value = d.urutan_surat || 'An-Naba -> An-Naas';
+                    
+                    document.getElementById('capTargetTipe').value = d.target_tipe || 'Halaman';
+                    document.getElementById('capTargetJml').value = d.target_jumlah || '';
+                } else {
+                    document.getElementById('capTotalJuz').value = 0; // Default kosong
+                }
+            } catch (error) {
+                console.error("Gagal menarik data capaian awal:", error);
+            }
+        };
+
+        window.tutupModalCapaianAwal = () => document.getElementById('modalCapaianAwal').classList.remove('active');
+
+        window.simpanCapaianAwalFirebase = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSimpanCapaianAwal');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+            btn.disabled = true;
+
+            const idSantri = document.getElementById('capaianIdSantri').value;
+
+            const dataCapaian = {
+                id_santri: idSantri,
+                nama_santri: document.getElementById('capaianNamaSantri').innerText,
+                uid_guru: auth.currentUser.uid,
+                
+                hafalan_juz: document.getElementById('capJuz').value,
+                hafalan_hal: document.getElementById('capHal').value,
+                hafalan_baris: document.getElementById('capBaris').value,
+                
+                tahsin_metode: document.getElementById('capTahsinMetode').value,
+                tahsin_jilid: document.getElementById('capTahsinJilid').value,
+                tahsin_hal: document.getElementById('capTahsinHal').value,
+                
+                total_juz: parseFloat(document.getElementById('capTotalJuz').value) || 0,
+                urutan_juz: document.getElementById('capUrutanJuz').value,
+                urutan_surat: document.getElementById('capUrutanSurat').value,
+                
+                target_tipe: document.getElementById('capTargetTipe').value,
+                target_jumlah: parseFloat(document.getElementById('capTargetJml').value),
+                
+                terakhir_update: serverTimestamp()
+            };
+
+            try {
+                // Menggunakan setDoc: Jika data belum ada dibuatkan, jika sudah ada maka ditimpa (update)
+                await setDoc(doc(db, "setting_capaian", idSantri), dataCapaian);
+                
+                alert("✅ Capaian Awal & Target berhasil disimpan!");
+                tutupModalCapaianAwal();
+            } catch (error) {
+                console.error(error); alert("❌ Gagal menyimpan data.");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Capaian Awal';
+                btn.disabled = false;
+            }
+        };
+
+    // ==========================================
     // MODUL ABSEN KEGIATAN KHUSUS (DI LUAR JADWAL)
     // ==========================================
     
@@ -1634,6 +2407,125 @@
             (err) => { alert("❌ GPS tidak terdeteksi. Izinkan browser mengakses lokasi."); btn.innerHTML = originalText; btn.disabled = false; },
             { enableHighAccuracy: true, timeout: 10000 }
         );
+    };
+    // === MODUL KELAS LIVE (AGORA) ===
+    // 1. Update Fungsi Navigasi
+    const fungsiBukaSubAsli = window.bukaSubAkademik;
+    window.bukaSubAkademik = (menu) => {
+        fungsiBukaSubAsli(menu); // Jalankan fungsi bawaan
+        document.getElementById('akademik-sub-live').style.display = (menu === 'live') ? 'block' : 'none';
+    };
+
+    const fungsiTutupSubAsli = window.tutupSubAkademik;
+    window.tutupSubAkademik = () => {
+        fungsiTutupSubAsli();
+        document.getElementById('akademik-sub-live').style.display = 'none';
+    };
+
+    // 2. Suntik Pilihan Rombel ke Dropdown Live
+    const fungsiMuatRombelAsli = window.muatPilihanRombelGuru;
+    window.muatPilihanRombelGuru = async () => {
+        await fungsiMuatRombelAsli(); 
+        // Ambil opsi dari dropdown target yang sudah terisi
+        document.getElementById('selectRombelLive').innerHTML = document.getElementById('selectRombelTarget').innerHTML;
+    };
+
+    // 3. Persiapan Sebelum Streaming
+    window.siapkanKelasLive = (idRombel) => {
+        if(!idRombel) return;
+        document.getElementById('btnMulaiLive').style.display = 'block';
+        
+        // Trik: Kita panggil fungsi jurnal harianmu agar form setoran langsung ter-render!
+        // Tapi kita sembunyikan dulu sampai kamera menyala.
+        document.getElementById('selectKbmHarian').value = idRombel; 
+        window.muatDaftarSantriKBM(idRombel);
+        
+        // Pindahkan hasil form dari Jurnal Harian ke Layar Live
+        setTimeout(() => {
+            document.getElementById('wadahSantriLive').innerHTML = document.getElementById('listSantriKBM').innerHTML;
+            // Hapus tombol simpan yang terbawa dari jurnal harian
+            const btnBawaan = document.getElementById('wadahSantriLive').querySelector('#btnSimpanJurnalMassal');
+            if(btnBawaan) btnBawaan.remove();
+        }, 1500);
+    };
+
+    // 4. Mesin Utama Agora
+    let clientAgora = null;
+    let trackLokal = { video: null, audio: null };
+
+    window.mulaiStreaming = async () => {
+        const idRombel = document.getElementById('selectRombelLive').value;
+        const btn = document.getElementById('btnMulaiLive');
+        
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan Kamera...';
+        btn.disabled = true;
+
+        try {
+            // Inisialisasi Agora (Ganti APP_ID dengan milikmu nanti)
+            const APP_ID = "4c6a76cbbb5a4028b16c3ebcc13fd590"; 
+            clientAgora = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+
+            // Bergabung ke ruangan sesuai ID Rombel
+            await clientAgora.join(APP_ID, idRombel, null, auth.currentUser.uid);
+
+            // Nyalakan Kamera & Mikrofon
+            const tracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+            trackLokal.audio = tracks[0];
+            trackLokal.video = tracks[1];
+
+            // Tampilkan Video Guru di elemen HTML
+            document.getElementById('areaVideoLive').style.display = 'flex';
+            document.getElementById('areaFormJurnalLive').style.display = 'block';
+            document.getElementById('setupKelasLive').style.display = 'none';
+            
+            trackLokal.video.play("video-guru");
+
+            // Publikasikan ke server agar santri bisa melihat
+            await clientAgora.publish(Object.values(trackLokal));
+
+            // Event Listener: Jika ada anak yang masuk
+            clientAgora.on("user-published", async (user, mediaType) => {
+                await clientAgora.subscribe(user, mediaType);
+                
+                if (mediaType === "video") {
+                    const playerSantri = document.createElement("div");
+                    playerSantri.id = `santri-${user.uid}`;
+                    playerSantri.style.width = "100%";
+                    playerSantri.style.height = "120px";
+                    playerSantri.style.background = "#2d3436";
+                    playerSantri.style.borderRadius = "8px";
+                    document.getElementById('grid-video-santri').append(playerSantri);
+                    
+                    user.videoTrack.play(`santri-${user.uid}`);
+                }
+                if (mediaType === "audio") user.audioTrack.play();
+            });
+
+            // Event Listener: Jika anak keluar
+            clientAgora.on("user-unpublished", (user) => {
+                const player = document.getElementById(`santri-${user.uid}`);
+                if (player) player.remove();
+            });
+
+        } catch (error) {
+            console.error(error);
+            alert("Gagal mengakses kamera/mikrofon. Pastikan izin browser diberikan.");
+            btn.innerHTML = '<i class="fa-solid fa-video"></i> Mulai Kelas Sekarang';
+            btn.disabled = false;
+        }
+    };
+
+    // 5. Keluar Ruangan
+    window.tinggalkanKelasLive = async () => {
+        if (trackLokal.audio) { trackLokal.audio.close(); trackLokal.audio = null; }
+        if (trackLokal.video) { trackLokal.video.close(); trackLokal.video = null; }
+        if (clientAgora) { await clientAgora.leave(); clientAgora = null; }
+        
+        document.getElementById('areaVideoLive').style.display = 'none';
+        document.getElementById('areaFormJurnalLive').style.display = 'none';
+        document.getElementById('setupKelasLive').style.display = 'block';
+        document.getElementById('btnMulaiLive').innerHTML = '<i class="fa-solid fa-video"></i> Mulai Kelas Sekarang';
+        document.getElementById('btnMulaiLive').disabled = false;
     };
 </script>
 
