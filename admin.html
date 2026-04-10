@@ -405,7 +405,7 @@
                         <h3>Akun & Hak Akses Pengguna</h3>
                         <div style="display:flex; gap:10px;">
                             <button class="btn-tambah" style="background:#27ae60;" onclick="exportDataGuru()"><i class="fa-solid fa-file-excel"></i> Export Master Data</button>
-                            <button class="btn-tambah" style="background:#0984e3;" onclick="bukaModalImport()"><i class="fa-solid fa-file-csv"></i> Import CSV</button>
+                            <button class="btn-tambah" style="background:#0984e3;" onclick="bukaModalImport()"><i class="fa-solid fa-file-excel"></i> Import Excel</button>
                             <button class="btn-tambah" onclick="bukaModalUser()"><i class="fa-solid fa-user-plus"></i> Tambah Manual</button>
                         </div>
                     </div>
@@ -516,29 +516,31 @@
             <div id="modalImport" class="modal-overlay">
                 <div class="modal-box">
                     <div class="modal-header">
-                        <h3><i class="fa-solid fa-file-csv" style="color:#0984e3;"></i> Import Data Pengguna (CSV)</h3>
+                        <h3><i class="fa-solid fa-file-excel" style="color:#27ae60;"></i> Import Data Pengguna (Excel)</h3>
                         <button class="btn-close-modal" onclick="tutupModalImport()"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-                    <div style="margin-bottom: 20px; background: rgba(9,132,227,0.1); padding: 15px; border-radius: 10px; font-size: 0.85rem; color: #2d3436; line-height: 1.6;">
-                        <strong>Format File (.csv) - Wajib Ada Judul di Baris 1:</strong><br>
-                        <code>Kolom A: Nama Lengkap</code><br>
-                        <code>Kolom B: Username (tanpa spasi)</code><br>
-                        <code>Kolom C: Password (min. 6 karakter)</code><br>
-                        <code>Kolom D: Tgl Bergabung (Format: YYYY-MM-DD)</code><br>
-                        <code>Kolom E: Role (Isi: <strong>guru</strong> atau <strong>admin_wilayah</strong>)</code><br>
-                        <code>Kolom F: Kode Wilayah (Cth: SBY-RAYA)</code><br>
+                    
+                    <div style="margin-bottom: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 10px; font-size: 0.85rem; color: #166534; line-height: 1.6;">
+                        <strong><i class="fa-solid fa-circle-info"></i> Panduan Singkat Import:</strong>
+                        <ul style="margin-left: 20px; margin-top: 5px;">
+                            <li>Hanya menerima file <strong>.xlsx</strong> atau <strong>.xls</strong>.</li>
+                            <li>Tanda koma pada gelar nama (cth: Allam, S.M.) sudah aman.</li>
+                            <li>Pastikan format tanggal adalah <b>YYYY-MM-DD</b> (Contoh: 2026-03-15).</li>
+                            <li>Lihat <b>Sheet 2 (Petunjuk)</b> di dalam template untuk aturan detail.</li>
+                        </ul>
                         
-                        <i style="color:var(--danger); margin-top:8px; display:block;">*Catatan Keamanan: Jika Anda login sebagai Admin Wilayah, kolom Role & Wilayah akan diabaikan dan otomatis dikunci ke "guru" di wilayah Anda.</i>
+                        <i style="color:var(--danger); margin-top:8px; display:block;">*Catatan: Jika Anda login sebagai Admin Wilayah, kolom Role & Wilayah akan otomatis dikunci ke wilayah Anda.</i>
                         
-                        <button type="button" onclick="unduhTemplateCSV()" style="margin-top:12px; padding:8px 15px; background:#ffffff; color:#0984e3; border:1px solid #0984e3; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.85rem; transition:0.2s;">
-                            <i class="fa-solid fa-download"></i> Unduh Contoh Format CSV
+                        <button type="button" onclick="unduhTemplateCSV()" style="margin-top:12px; padding:10px 15px; background:#ffffff; color:#27ae60; border:1px solid #27ae60; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.85rem; transition:0.2s; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-cloud-download-alt"></i> Unduh Template Excel (2 Sheet)
                         </button>
                     </div>
-                    <input type="file" id="fileCsvUsers" accept=".csv" style="margin-bottom:15px; width:100%; padding: 10px; border: 1px dashed #0984e3; border-radius: 10px; background: white;">
                     
-                    <div id="previewContainer" style="display:none; max-height: 200px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #dfe6e9; border-radius: 8px;">
+                    <input type="file" id="fileCsvUsers" accept=".xlsx, .xls" style="margin-bottom:15px; width:100%; padding: 10px; border: 1px dashed #27ae60; border-radius: 10px; background: white;">
+                    
+                    <div id="previewContainer" style="display:none; max-height: 250px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #dfe6e9; border-radius: 8px;">
                         <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
-                            <thead style="background: #f4f7f6; position: sticky; top: 0;">
+                            <thead style="background: #f4f7f6; position: sticky; top: 0; z-index: 10;">
                                 <tr>
                                     <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dfe6e9;">Nama Lengkap</th>
                                     <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dfe6e9;">Username</th>
@@ -548,13 +550,12 @@
                                     <th style="padding: 8px; text-align: center; border-bottom: 1px solid #dfe6e9;">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="tabelPreviewCSV">
-                                </tbody>
+                            <tbody id="tabelPreviewCSV"></tbody>
                         </table>
                     </div>
 
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn-submit" style="background:#f39c12; flex: 1;" id="btnPreviewImport" onclick="previewCsvUsers()"><i class="fa-solid fa-eye"></i> 1. Tampilkan Data</button>
+                        <button class="btn-submit" style="background:#f39c12; flex: 1;" id="btnPreviewImport" onclick="previewCsvUsers()"><i class="fa-solid fa-magnifying-glass"></i> 1. Validasi Excel</button>
                         <button class="btn-submit" style="background:#0984e3; flex: 1; display: none;" id="btnMulaiImport" onclick="konfirmasiImportCsv()"><i class="fa-solid fa-cloud-arrow-up"></i> 2. Konfirmasi & Import</button>
                     </div>
                     
@@ -2009,25 +2010,36 @@
         };
 
         // ==========================================
-        // MESIN IMPORT CSV MASSAL
+        // MESIN IMPORT EXCEL MASSAL (NAMA FUNGSI SEJARAH DIPERTAHANKAN)
         // ==========================================
         const modalImport = document.getElementById('modalImport');
 
-        // Fungsi untuk menghasilkan dan mengunduh file template CSV otomatis
+        // 1. Fungsi Unduh Template Excel (2 Sheet)
         window.unduhTemplateCSV = function() {
-            // Kita tambahkan HEADER (Baris Judul) agar gampang dibaca di Excel
-            const isiCSV = "Nama Lengkap,Username,Password,Tanggal Bergabung,Role,Kode Wilayah\nUstaz Allam Abdullah,allam,123456,2026-03-01,guru,SBY-RAYA\nAdmin Surabaya,adminsby,123456,2026-01-15,admin_wilayah,SBY-RAYA";
+            const wb = XLSX.utils.book_new();
             
-            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + isiCSV);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Template_Import_User_SiHaju.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Sheet 1: Data Kerja
+            const wsData = XLSX.utils.json_to_sheet([
+                { "Nama Lengkap": "Ustaz Allam, S.M.", "Username": "allam", "Password": "password123", "Tanggal Bergabung": "2026-03-01", "Role": "guru", "Kode Wilayah": "SBY-RAYA" },
+                { "Nama Lengkap": "Admin Surabaya", "Username": "adminsby", "Password": "password123", "Tanggal Bergabung": "2026-01-15", "Role": "admin_wilayah", "Kode Wilayah": "SBY-RAYA" }
+            ]);
+            XLSX.utils.book_append_sheet(wb, wsData, "Data_User");
+            
+            // Sheet 2: Petunjuk Pengisian
+            const dataPetunjuk = [
+                { "Kolom": "Nama Lengkap", "Aturan": "Bebas gunakan huruf besar/kecil dan gelar (Koma di gelar aman)." },
+                { "Kolom": "Username", "Aturan": "Tanpa spasi, huruf kecil semua. Contoh: ahmad_huda" },
+                { "Kolom": "Password", "Aturan": "Minimal 6 Karakter." },
+                { "Kolom": "Tanggal Bergabung", "Aturan": "Wajib format YYYY-MM-DD. Contoh: 2026-01-25" },
+                { "Kolom": "Role", "Aturan": "Isi 'guru' atau 'admin_wilayah'." },
+                { "Kolom": "Kode Wilayah", "Aturan": "Gunakan Kode Wilayah yang terdaftar (Cth: PUSAT, SBY-RAYA)." }
+            ];
+            const wsPetunjuk = XLSX.utils.json_to_sheet(dataPetunjuk);
+            XLSX.utils.book_append_sheet(wb, wsPetunjuk, "Petunjuk_Pengisian");
+            
+            XLSX.writeFile(wb, "Template_Import_User_SiHaju.xlsx");
         };
 
-        // Pastikan memakai window. di depannya
         window.bukaModalImport = function() { 
             document.getElementById('fileCsvUsers').value = ''; 
             document.getElementById('importProgress').innerText = ''; 
@@ -2036,46 +2048,68 @@
 
         window.tutupModalImport = () => {
             document.getElementById('modalImport').classList.remove('active');
-            
-            // --- BARIS RESET PREVIEW (Tambahkan ini) ---
             document.getElementById('previewContainer').style.display = 'none';
             document.getElementById('btnMulaiImport').style.display = 'none';
             document.getElementById('btnPreviewImport').style.display = 'block';
             document.getElementById('importProgress').innerHTML = '';
             document.getElementById('fileCsvUsers').value = '';
             window.dataCsvSiapImport = [];
-            // ------------------------------------------
         };
 
-        // 1. Variabel penampung data
         window.dataCsvSiapImport = [];
 
-        // 2. Fungsi Membaca CSV dan Memasukkan ke Variabel
-        window.previewCsvUsers = function() {
+        // 2. Fungsi Ekstraksi Excel & RADAR ANTI-DUPLIKAT
+        window.previewCsvUsers = async function() {
             const fileInput = document.getElementById('fileCsvUsers');
-            if (!fileInput.files.length) { alert("Pilih file CSV terlebih dahulu!"); return; }
+            if (!fileInput.files.length) { alert("Pilih file Excel terlebih dahulu!"); return; }
 
             const file = fileInput.files[0];
             const reader = new FileReader();
+            const btnPreview = document.getElementById('btnPreviewImport');
+            
+            btnPreview.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memindai Data...';
+            btnPreview.disabled = true;
+
+            // RADAR 1 (SERVER): Tarik semua username yang sudah ada di Firebase
+            let usernameDiDatabase = [];
+            try {
+                const snapUsers = await getDocs(collection(db, "users"));
+                snapUsers.forEach(doc => {
+                    if(doc.data().email) {
+                        usernameDiDatabase.push(doc.data().email.split('@')[0]);
+                    }
+                });
+            } catch (err) {
+                console.error("Gagal menarik data validasi:", err);
+                alert("Koneksi bermasalah. Gagal memvalidasi data ke server.");
+                btnPreview.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> 1. Validasi Excel';
+                btnPreview.disabled = false;
+                return;
+            }
 
             reader.onload = function(e) {
-                const text = e.target.result;
-                const rows = text.split(/\r?\n/);
-                window.dataCsvSiapImport = []; // Kosongkan keranjang
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const ws = workbook.Sheets[workbook.SheetNames[0]]; // Baca sheet 1
+                    const rows = XLSX.utils.sheet_to_json(ws, {raw: false, dateNF: 'yyyy-mm-dd', defval: ""});
+                    
+                    window.dataCsvSiapImport = []; 
+                    let usernameDiExcelIni = new Set(); // RADAR 2 (LOKAL)
+                    let adaErrorDuplikat = false;
 
-                for (let i = 1; i < rows.length; i++) {
-                    if (rows[i].trim() === '') continue; 
+                    for (let i = 0; i < rows.length; i++) {
+                        const rowData = rows[i];
+                        if (Object.keys(rowData).length === 0) continue; 
 
-                    const cols = rows[i].split(',');
-                    if (cols.length >= 3) {
-                        const nama = cols[0]?.trim();
-                        const username = cols[1]?.trim().toLowerCase();
-                        const pass = cols[2]?.trim();
-                        let tgl_gabung = cols[3]?.trim() || '';
-                        let role = cols[4]?.trim().toLowerCase() || 'guru';
-                        let id_wilayah = cols[5]?.trim().toUpperCase() || 'PUSAT';
+                        const nama = rowData["Nama Lengkap"] ? rowData["Nama Lengkap"].toString().trim() : "";
+                        const username = rowData["Username"] ? rowData["Username"].toString().trim().toLowerCase() : "";
+                        const pass = rowData["Password"] ? rowData["Password"].toString().trim() : "";
+                        let tgl_gabung = rowData["Tanggal Bergabung"] ? rowData["Tanggal Bergabung"].toString().trim() : "";
+                        let role = rowData["Role"] ? rowData["Role"].toString().trim().toLowerCase() : 'guru';
+                        let id_wilayah = rowData["Kode Wilayah"] ? rowData["Kode Wilayah"].toString().trim().toUpperCase() : 'PUSAT';
 
-                        // Obat Tanggal
+                        // Obat Tanggal Excel
                         if (tgl_gabung.includes('/')) {
                             const parts = tgl_gabung.split('/');
                             if (parts.length === 3 && parts[2].length === 4) {
@@ -2083,35 +2117,62 @@
                             }
                         }
 
-                        // Proteksi Otoritas
+                        // Kunci Otoritas
                         if (window.adminData.role === 'admin_wilayah') {
                             role = 'guru'; id_wilayah = window.adminData.id_wilayah;
                         }
 
-                        if (nama && username && pass.length >= 6) {
+                        // Syarat Masuk Keranjang
+                        if (nama && username && pass && pass.length >= 6) {
                             const email = username + '@hj.com';
-                            window.dataCsvSiapImport.push({nama, username, email, pass, tgl_gabung, role, id_wilayah});
+                            let pesanError = "";
+
+                            // DETEKSI RADAR
+                            if (usernameDiDatabase.includes(username)) {
+                                pesanError = "Terdaftar di Sistem";
+                                adaErrorDuplikat = true;
+                            } else if (usernameDiExcelIni.has(username)) {
+                                pesanError = "Ganda di Excel ini";
+                                adaErrorDuplikat = true;
+                            }
+
+                            usernameDiExcelIni.add(username); // Tandai sudah diproses
+                            window.dataCsvSiapImport.push({nama, username, email, pass, tgl_gabung, role, id_wilayah, pesanError});
                         }
                     }
-                }
 
-                if(window.dataCsvSiapImport.length > 0) {
-                    renderTabelPreview(); // Panggil fungsi pembuat tabel
-                } else {
-                    alert("Tidak ada data valid yang ditemukan! Periksa kembali format CSV-nya.");
+                    if(window.dataCsvSiapImport.length > 0) {
+                        renderTabelPreview(adaErrorDuplikat); 
+                    } else {
+                        alert("Tidak ada data valid! Pastikan memakai template Excel terbaru (Perhatikan baris Judul Kolom).");
+                    }
+                } catch (err) {
+                    console.error(err); alert("Gagal membaca file. Pastikan file Excel tidak rusak.");
+                } finally {
+                    btnPreview.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> 1. Validasi Excel';
+                    btnPreview.disabled = false;
                 }
             };
-            reader.readAsText(file);
+            reader.readAsArrayBuffer(fileInput.files[0]);
         };
 
-        // 3. Fungsi Membuat Tampilan Tabel (Bisa dipanggil ulang saat baris dihapus)
-        window.renderTabelPreview = function() {
+        // 3. Render Tabel Preview (Dengan Fitur Blokir Baris Merah)
+        window.renderTabelPreview = function(adaErrorDuplikat = false) {
             let htmlTable = '';
             
+            // Cek ulang error saat render (berguna jika admin klik tombol tong sampah)
+            let sisaError = false; 
+
             window.dataCsvSiapImport.forEach((data, index) => {
-                htmlTable += `<tr id="baris-csv-${index}">
+                if(data.pesanError) sisaError = true;
+                
+                const bgWarna = data.pesanError ? '#fff0f0' : 'transparent';
+                const styleUsername = data.pesanError ? `color: #d63031; font-weight: bold;` : ``;
+                const labelError = data.pesanError ? `<br><small style="color:#d63031; font-weight:bold;"><i class="fa-solid fa-triangle-exclamation"></i> ${data.pesanError}</small>` : '';
+
+                htmlTable += `<tr id="baris-csv-${index}" style="background-color: ${bgWarna};">
                     <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">${data.nama}</td>
-                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">${data.username}</td>
+                    <td style="padding: 6px 8px; border-bottom: 1px solid #eee; ${styleUsername}">${data.username}${labelError}</td>
                     <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">${data.tgl_gabung}</td>
                     <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">
                         <span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:0.7rem;">${data.role}</span>
@@ -2123,29 +2184,35 @@
                 </tr>`;
             });
 
+            const progressBox = document.getElementById('importProgress');
+            const btnImport = document.getElementById('btnMulaiImport');
+
             if (window.dataCsvSiapImport.length > 0) {
                 document.getElementById('tabelPreviewCSV').innerHTML = htmlTable;
                 document.getElementById('previewContainer').style.display = 'block';
-                document.getElementById('btnMulaiImport').style.display = 'block';
                 document.getElementById('btnPreviewImport').style.display = 'none';
-                document.getElementById('importProgress').innerHTML = `<span style="color:#d35400;"><i class="fa-solid fa-circle-exclamation"></i> Terdapat ${window.dataCsvSiapImport.length} data siap import. Hapus baris yang salah sebelum konfirmasi.</span>`;
+
+                if (sisaError) {
+                    btnImport.style.display = 'none'; // Kunci Tombol!
+                    progressBox.innerHTML = `<span style="color:#d63031;"><i class="fa-solid fa-ban"></i> Validasi Gagal! Hapus baris merah (Username Ganda) untuk melanjutkan.</span>`;
+                } else {
+                    btnImport.style.display = 'block'; // Buka Tombol!
+                    progressBox.innerHTML = `<span style="color:#27ae60;"><i class="fa-solid fa-check-circle"></i> Validasi Sukses! ${window.dataCsvSiapImport.length} data siap di-import.</span>`;
+                }
             } else {
                 document.getElementById('previewContainer').style.display = 'none';
-                document.getElementById('btnMulaiImport').style.display = 'none';
+                btnImport.style.display = 'none';
                 document.getElementById('btnPreviewImport').style.display = 'block';
-                document.getElementById('importProgress').innerHTML = `<span style="color:#d63031;">Semua data telah dihapus. Silakan upload ulang file CSV.</span>`;
+                progressBox.innerHTML = `<span style="color:#d63031;">Semua data telah dihapus. Silakan upload ulang file Excel.</span>`;
             }
         };
 
-        // 4. Fungsi Hapus Baris
         window.hapusBarisPreview = function(index) {
-            // Hapus 1 data dari memori berdasarkan nomor urutnya
             window.dataCsvSiapImport.splice(index, 1);
-            // Render ulang tabelnya agar nomor urut kembali rapi
-            renderTabelPreview();
+            renderTabelPreview(); // Otomatis nge-cek apakah masih ada error tersisa
         };
 
-        // TAHAP 2: KIRIM KE FIREBASE
+        // 4. TEMBAK FIREBASE (KODE ASLI)
         window.konfirmasiImportCsv = async function() {
             const btnImport = document.getElementById('btnMulaiImport');
             const progress = document.getElementById('importProgress');
@@ -2180,16 +2247,15 @@
 
             await signOut(secondaryAuth);
             
-            // Kembalikan tombol ke keadaan semula
             btnImport.disabled = false;
             btnImport.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 2. Konfirmasi & Import';
             btnImport.style.display = 'none';
             document.getElementById('btnPreviewImport').style.display = 'block';
             document.getElementById('previewContainer').style.display = 'none';
             
-            progress.innerHTML = `<span style="color:#27ae60;"><i class="fa-solid fa-check-circle"></i> Selesai! Berhasil: ${sukses} akun | Gagal/Duplikat: ${gagal} akun.</span>`;
+            progress.innerHTML = `<span style="color:#27ae60;"><i class="fa-solid fa-check-circle"></i> Selesai! Berhasil: ${sukses} akun | Gagal: ${gagal} akun.</span>`;
             
-            window.dataCsvSiapImport = []; // Kosongkan memori kembali
+            window.dataCsvSiapImport = []; 
         };
         // ==========================================
         // MODUL 6: PERSETUJUAN IZIN (ADMIN WILAYAH)
