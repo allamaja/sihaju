@@ -2220,7 +2220,10 @@
             btnImport.disabled = true;
             btnImport.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sedang Mengimport...';
 
-            let sukses = 0; let gagal = 0;
+            let sukses = 0; 
+            let gagal = 0;
+            let daftarGagal = []; // PENAMPUNG NAMA YANG GAGAL
+
             const totalData = window.dataCsvSiapImport.length;
 
             for (let i = 0; i < totalData; i++) {
@@ -2241,21 +2244,35 @@
                     });
                     sukses++;
                 } catch (err) {
-                    console.error(`Gagal import ${data.nama}:`, err); gagal++;
+                    console.error(`Gagal import ${data.nama}:`, err); 
+                    gagal++;
+                    daftarGagal.push(data.nama); // Cacat nama siapa yang ditolak Firebase
                 }
             }
 
             await signOut(secondaryAuth);
             
+            // Kembalikan tombol ke keadaan semula
             btnImport.disabled = false;
             btnImport.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 2. Konfirmasi & Import';
             btnImport.style.display = 'none';
             document.getElementById('btnPreviewImport').style.display = 'block';
             document.getElementById('previewContainer').style.display = 'none';
             
-            progress.innerHTML = `<span style="color:#27ae60;"><i class="fa-solid fa-check-circle"></i> Selesai! Berhasil: ${sukses} akun | Gagal: ${gagal} akun.</span>`;
+            // BIKIN LAPORAN AKHIR YANG DETAIL
+            let pesanAkhir = `<span style="color:#27ae60;"><i class="fa-solid fa-check-circle"></i> Selesai! Berhasil: ${sukses} akun.</span>`;
             
-            window.dataCsvSiapImport = []; 
+            if (gagal > 0) {
+                pesanAkhir += `<br><span style="color:#d63031;"><i class="fa-solid fa-circle-exclamation"></i> Gagal/Duplikat: ${gagal} akun.</span>`;
+                // Tampilkan kotak merah berisi daftar nama yang gagal
+                pesanAkhir += `<div style="margin-top:10px; font-size:0.8rem; color:#d63031; text-align:left; background:#fff0f0; padding:10px; border-radius:8px; max-height: 150px; overflow-y: auto;">
+                                <strong>Daftar Akun Gagal Diproses:</strong><br> - ${daftarGagal.join('<br> - ')}
+                               </div>`;
+            }
+            
+            progress.innerHTML = pesanAkhir;
+            
+            window.dataCsvSiapImport = []; // Kosongkan memori kembali
         };
         // ==========================================
         // MODUL 6: PERSETUJUAN IZIN (ADMIN WILAYAH)
